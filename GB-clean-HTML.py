@@ -13,31 +13,31 @@ class CleanHtml(sublime_plugin.TextCommand):
 
         # define normal substitutions
         substitutions = [
-            ('&nbsp;', ' '), #Non breaking spaces
-            (' style *= *\"font-size: 1rem;\"', ''), #font-sizes
-            (' id *= *\"yui.*?\"', ''), #yui id's
+            ('&nbsp;', ' '),                                      # Non breaking spaces
+            (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
+            (' id *= *\"yui.*?\"', ''),                           # yui id's
             ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
-            ('(<[^>]*)(class|id|style)=\" *\"','\\1'), # specific empty attributes
+            ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
 
         # define deep substitutions
         deepsubs = [
-            (' style=\".*?\"',''), #Remove style attributes
-            (' [^a][\w-]+=" *"(?=.*?>)','') #Remove empty attributes that are not alt
+            (' style=\".*?\"',''),                                # Remove style attributes
+            (' [^a][\w-]+=" *"(?=.*?>)','')                       # Remove empty attributes that are not alt
         ]
 
         # define tags to be removed
         tags = [
-            '<span', # any span (with or without attributes)
-            '<section', # any section
-            '<article', # any article
-            '<div>', # div without attribuites
-            '<li>\\W*<p', # li>p
-            '<ul>\\W*<ul', # ul>ul
-            '<ol>\\W*<ol', # ol>ol
-            '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)', # specific empty tags
-            '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))', # p>p or p>ul or p>div etc.
-            '<br(?=>\\W*</p)' # br inside closing </p>
+            '<span',                                              # any span (with or without attributes)
+            '<section',                                           # any section
+            '<article',                                           # any article
+            '<div>',                                              # div without attribuites
+            '<li>\\W*<p',                                         # li>p
+            '<ul>\\W*<ul',                                        # ul>ul
+            '<ol>\\W*<ol',                                        # ol>ol
+            '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',   # specific empty tags
+            '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',             # p>p or p>ul or p>div etc.
+            '<br(?=>\\W*</p)'                                     # br inside closing </p>
         ]
 
         replacestrings(self, edit, type, substitutions, deepsubs)
