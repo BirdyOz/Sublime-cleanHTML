@@ -4,6 +4,7 @@ class CleanHtml(sublime_plugin.TextCommand):
     # Type = nomal - Remove spans, font-sizes, non-breaking spaces empty tags etc.
     # Type = deep - Normal + style attributes
     # Type = table - Deep plus table tags
+
     def run(self, edit, type):
         print("Type: ", type, " cleaning")
 
@@ -32,7 +33,7 @@ class CleanHtml(sublime_plugin.TextCommand):
             '<ul>\\W*<ul', #ul>ul
             '<ol>\\W*<ol', #ol>ol
             '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)', #specific empty tags
-            '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div))', # p>p or p>ul or p>div etc.
+            '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))', # p>p or p>ul or p>div etc.
             '<br(?=>\\W*</p)' #br inside closing </p>
         ]
 
@@ -48,6 +49,7 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
     # convert to string
     sel = self.view.sel()
     string = self.view.substr(sel[0])
+
     # Loop through substitutions
     for old, new in substitutions:
         strings_replaced += len(re.findall(old, string))
@@ -61,31 +63,38 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
 
-    # Update status
-    status_msg = "Strings replaced = " + str(strings_replaced)
-    self.view.set_status('str_replaced',status_msg)
-
     # Add back in newlines for specific tags
     string = re.sub('(<!--|<br>|<img|<small)', '\\n\\1', string)
 
     # Output to view
     self.view.replace(edit, sel[0], string)
 
+    # Update status
+    status_msg = "Strings replaced = " + str(strings_replaced)
+    self.view.set_status('str_replaced',status_msg)
+
 # Highlight and remove unneccesary tags
 def removetags(self, edit, type, tags):
     self.view.sel().clear()
+
+    # Select all tags
     for tag in tags:
         for rgn in self.view.find_all(tag):
             # Position cursor outside (after) sel
             self.view.sel().add(rgn.end())
+
+    # If cleaning tables as well
     if type == "table":
         print("Table cleaning")
         for rgn in self.view.find_all('<table|<tbody|<tr|<th|<thead|<td|<caption'):
             self.view.sel().add(rgn.end())
+
     # Remove tags and prettify
-    status_msg = "Tags removed = " + str(len(self.view.sel()))
-    self.view.set_status('tags_removed',status_msg)
     self.view.run_command("emmet_remove_tag")
     self.view.run_command("select_all")
     self.view.run_command("htmlprettify")
     self.view.sel().clear()
+
+    # Update status image
+    status_msg = "Tags removed = " + str(len(self.view.sel()))
+    self.view.set_status('tags_removed',status_msg)
