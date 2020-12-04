@@ -1,0 +1,26 @@
+[
+    {
+        "keys": ["command+shift+\\"],
+        "command": "clean_html",
+        "args":
+        {
+            "type": "normal"
+        }
+    },
+    {
+        "keys": ["command+option+\\"],
+        "command": "clean_html",
+        "args":
+        {
+            "type": "deep"
+        }
+    },
+    {
+        "keys": ["command+shift+option+\\"],
+        "command": "clean_html",
+        "args":
+        {
+            "type": "table"
+        }
+    }
+]

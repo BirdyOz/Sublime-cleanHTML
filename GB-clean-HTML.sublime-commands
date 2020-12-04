@@ -1,0 +1,26 @@
+[
+    {
+        "caption": "BirdyOz - Clean HTML (normal)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "normal"
+        }
+    },
+    {
+        "caption": "BirdyOz - Clean HTML (Deep)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "deep"
+        }
+    },
+    {
+        "caption": "BirdyOz - Clean HTML (Table plus Deep)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "table"
+        }
+    }
+]
