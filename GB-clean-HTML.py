@@ -6,7 +6,10 @@ class CleanHtml(sublime_plugin.TextCommand):
     # Type = table - Deep plus table tags
 
     def run(self, edit, type):
-        print("Type: ", type, " cleaning")
+
+        # Update status image
+        status_msg = "Clean HTML = " + type + " cleaning"
+        self.view.set_status('cleaning',status_msg)
 
         # define normal substitutions
         substitutions = [
@@ -30,11 +33,11 @@ class CleanHtml(sublime_plugin.TextCommand):
             '<article', # any article
             '<div>', # div without attribuites
             '<li>\\W*<p', # li>p
-            '<ul>\\W*<ul', #ul>ul
-            '<ol>\\W*<ol', #ol>ol
-            '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)', #specific empty tags
+            '<ul>\\W*<ul', # ul>ul
+            '<ol>\\W*<ol', # ol>ol
+            '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)', # specific empty tags
             '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))', # p>p or p>ul or p>div etc.
-            '<br(?=>\\W*</p)' #br inside closing </p>
+            '<br(?=>\\W*</p)' # br inside closing </p>
         ]
 
         replacestrings(self, edit, type, substitutions, deepsubs)
@@ -57,7 +60,7 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
 
     # For Deep and table Clean
     if type == "deep" or type == "table":
-        print("Deep cleaning")
+
         # Loop through substitutions
         for old, new in deepsubs:
             strings_replaced += len(re.findall(old, string))
@@ -85,16 +88,16 @@ def removetags(self, edit, type, tags):
 
     # If cleaning tables as well
     if type == "table":
-        print("Table cleaning")
+
         for rgn in self.view.find_all('<table|<tbody|<tr|<th|<thead|<td|<caption'):
             self.view.sel().add(rgn.end())
+
+    # Update status image
+    status_msg = "Tags removed = " + str(len(self.view.sel()))
+    self.view.set_status('tags_removed',status_msg)
 
     # Remove tags and prettify
     self.view.run_command("emmet_remove_tag")
     self.view.run_command("select_all")
     self.view.run_command("htmlprettify")
     self.view.sel().clear()
-
-    # Update status image
-    status_msg = "Tags removed = " + str(len(self.view.sel()))
-    self.view.set_status('tags_removed',status_msg)
