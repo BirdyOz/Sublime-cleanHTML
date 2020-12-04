@@ -14,8 +14,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         # define normal substitutions
         substitutions = [
             ('&nbsp;', ' '), #Non breaking spaces
-            (' style=\"font-size: 1rem;\"', ''), #font-sizes
-            (' id=\"yui.*?\"', ''), #yui id's
+            (' style *= *\"font-size: 1rem;\"', ''), #font-sizes
+            (' id *= *\"yui.*?\"', ''), #yui id's
             ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
             ('(<[^>]*)(class|id|style)=\" *\"','\\1'), # specific empty attributes
         ]
