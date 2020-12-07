@@ -44,7 +44,7 @@ Keboard shortcuts (Mac)
 
 * <kbd>CMD</kbd> + <kbd>Shift</kbd> + <kbd>\\</kbd> - Normal
 * <kbd>CMD</kbd> + <kbd>Opt</kbd> + <kbd>\\</kbd> - Deep
-* <kbd>CMD</kbd> + <kbd>Shift</kbd>  + <kbd>Opt</kbd> + <kbd>\\</kbd> - Normal
+* <kbd>CMD</kbd> + <kbd>Shift</kbd>  + <kbd>Opt</kbd> + <kbd>\\</kbd> - Table
 
 
 
