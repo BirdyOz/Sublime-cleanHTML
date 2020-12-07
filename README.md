@@ -25,7 +25,7 @@ This ST3 plugin performs a range of HTML cleaning and code sanitisation function
 
 ## Dependancies
 
-This plugin inkokes functions from other Sublime Text Packages:
+This plugin invokes functions from other Sublime Text Packages:
 
 <ul>
     <li><a href="https://packagecontrol.io/packages/Emmet" target="_blank">Emmet - Packages - Package Control</a></li>
@@ -33,6 +33,18 @@ This plugin inkokes functions from other Sublime Text Packages:
 </ul>
 
 Please ensure that you have these plugins installed, prior to running CleanHTML
+
+## Usage
+
+1. Launch Package Control
+2. Type 'Clean HTML'
+3. Choose cleaning mode (Normal/Deep/Table)
+
+Keboard shortcuts (Mac)
+
+* <kbd>CMD</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> - Normal
+* <kbd>CMD</kbd> + <kbd>Opt</kbd> + <kbd>\</kbd> - Deep
+* <kbd>CMD</kbd> + <kbd>Shift</kbd>  + <kbd>Opt</kbd> + <kbd>\</kbd> - Normal
 
 
 
