@@ -16,6 +16,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('&nbsp;', ' '),                                      # Non breaking spaces
         (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
         (' id *= *\"yui.*?\"', ''),                           # yui id's
+        ('(<li>)[1-9\. \#\*•]+', '\\1'),                      # li's that start with 1,•,#,* etc.
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
