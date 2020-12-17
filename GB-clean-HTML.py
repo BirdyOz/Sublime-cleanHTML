@@ -19,14 +19,12 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
-
                                                               # DEEP SUBSTITUTIONS
         deepsubs = [                                          # ------------------
         (' style=\".*?\"',''),                                # Remove style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                       # Remove empty attributes that are not alt
         ]
-
-                                                              # TAGS TO BE REMOVED
+                                                           # TAGS TO BE REMOVED
         tags = [                                              # ------------------
         '<span',                                              # any span (with or without attributes)
         '<section',                                           # any section
