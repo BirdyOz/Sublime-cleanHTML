@@ -1,6 +1,6 @@
 [
     {
-        "keys": ["command+shift+\\"],
+        "caption": "BirdyOz - Clean HTML (normal)",
         "command": "clean_html",
         "args":
         {
@@ -8,7 +8,7 @@
         }
     },
     {
-        "keys": ["command+option+\\"],
+        "caption": "BirdyOz - Clean HTML (Deep)",
         "command": "clean_html",
         "args":
         {
@@ -16,7 +16,7 @@
         }
     },
     {
-        "keys": ["command+shift+option+\\"],
+        "caption": "BirdyOz - Clean HTML (Table plus Deep)",
         "command": "clean_html",
         "args":
         {
