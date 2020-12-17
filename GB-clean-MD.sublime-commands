@@ -1,6 +1,6 @@
 [
     {
-        "keys": ["command+control+\\"],
+        "caption": "BirdyOz - Clean MarkDown",
         "command": "clean_md",
         "args":
         {
