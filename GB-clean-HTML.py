@@ -10,7 +10,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         # Update status image
         status_msg = "Clean HTML = " + type + " cleaning"
         self.view.set_status('cleaning',status_msg)
-
                                                               # NORMAL SUBSTITUTIONS
         substitutions = [                                     # -------------------
         ('&nbsp;', ' '),                                      # Non breaking spaces
