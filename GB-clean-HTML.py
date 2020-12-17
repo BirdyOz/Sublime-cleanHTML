@@ -61,8 +61,8 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
 
         # Loop through substitutions
         for old, new in deepsubs:
-            strings_replaced += len(re.findall(old, string))
-            string = re.sub(old, new, string)
+            strings_replaced += len(re.findall(old, string, flags=re.MULTILINE))
+            string = re.sub(old, new, string, flags=re.MULTILINE)
 
     # Add back in newlines for specific tags
     string = re.sub('(<!--|<br>|<img|<small)', '\\n\\1', string)
