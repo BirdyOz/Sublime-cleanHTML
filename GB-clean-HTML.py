@@ -11,7 +11,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         status_msg = "Clean HTML = " + type + " cleaning"
         self.view.set_status('cleaning',status_msg)
                                                               # NORMAL SUBSTITUTIONS
-        substitutions = [                                     # -------------------
+        substitutions = [                                     # ====================
         ('&nbsp;', ' '),                                      # Non breaking spaces
         (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
         (' id *= *\"yui.*?\"', ''),                           # yui id's
@@ -20,12 +20,12 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
                                                               # DEEP SUBSTITUTIONS
-        deepsubs = [                                          # ------------------
+        deepsubs = [                                          # ==================
         (' style=\".*?\"',''),                                # Remove style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                       # Remove empty attributes that are not alt
         ]
                                                               # TAGS TO BE REMOVED
-        tags = [                                              # ------------------
+        tags = [                                              # ==================
         '<span',                                              # any span (with or without attributes)
         '<section',                                           # any section
         '<article',                                           # any article
