@@ -15,7 +15,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('&nbsp;', ' '),                                      # Non breaking spaces
         (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
         (' id *= *\"yui.*?\"', ''),                           # yui id's
-        ('(<li>)[1-9\. \#\*•]+', '\\1'),                      # li's that start with 1,•,#,* etc.
+        ('(<li>)[\d\. \#\*•-]+', '\\1'),                      # li's that start with 1,•,#,* etc.
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
@@ -24,7 +24,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' style=\".*?\"',''),                                # Remove style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                       # Remove empty attributes that are not alt
         ]
-                                                           # TAGS TO BE REMOVED
+                                                              # TAGS TO BE REMOVED
         tags = [                                              # ------------------
         '<span',                                              # any span (with or without attributes)
         '<section',                                           # any section
@@ -35,7 +35,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<ol>\\W*<ol',                                        # ol>ol
         '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',   # specific empty tags
         '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',             # p>p or p>ul or p>div etc.
-        '<br(?=>\\W*</p)'                                     # br inside closing </p>
+        '<br(?=>\\W*</p)',                                    # br inside closing </p>
+        '<h[1-6]><(strong|b|i|em)'                            # headings with bolded tecxt etc
         ]
 
         replacestrings(self, edit, type, substitutions, deepsubs)
@@ -61,8 +62,8 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
 
         # Loop through substitutions
         for old, new in deepsubs:
-            strings_replaced += len(re.findall(old, string, flags=re.MULTILINE))
-            string = re.sub(old, new, string, flags=re.MULTILINE)
+            strings_replaced += len(re.findall(old, string))
+            string = re.sub(old, new, string)
 
     # Add back in newlines for specific tags
     string = re.sub('(<!--|<br>|<img|<small)', '\\n\\1', string)
@@ -70,7 +71,7 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
     # Output to view
     self.view.replace(edit, sel[0], string)
 
-    # Update status
+    # Update status message
     status_msg = "Strings replaced = " + str(strings_replaced)
     self.view.set_status('str_replaced',status_msg)
 
