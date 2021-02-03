@@ -10,6 +10,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         # Update status image
         status_msg = "Clean HTML = " + type + " cleaning"
         self.view.set_status('cleaning',status_msg)
+
                                                               # NORMAL SUBSTITUTIONS
         substitutions = [                                     # ====================
         ('&nbsp;', ' '),                                      # Non breaking spaces
@@ -35,15 +36,21 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<ol>\\W*<ol',                                        # ol>ol
         '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',   # specific empty tags
         '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',             # p>p or p>ul or p>div etc.
-        '<br(?=>\\W*</p)',                                    # br inside closing </p>
-        '<h[1-6]><(strong|b|i|em)'                            # headings with bolded tecxt etc
+        '<br(?=>\\W*</)',                                     # br just inside closing tag
+        '<h[1-6]><(strong|b|i|em)'                            # headings with bolded text etc
+        ]
+                                                              # ADD BACK IN WHITESPACE
+        linebreaks = [                                        # ======================
+        ('(<!--|<br>|<img|<small)', '\\n\\1'),                # breaks before certain tags
+        ('(<!-- Start [^>]*-->)', '\\n\\1'),                  # Extra line before Start of comment block
+        ('(<!-- End [^>]*-->)', '\\1\\n\\n')                  # Extra after end of comment block
         ]
 
-        replacestrings(self, edit, type, substitutions, deepsubs)
+        replacestrings(self, edit, type, substitutions, deepsubs, linebreaks)
         removetags(self, edit, type, tags)
 
 # Perform all text substitutions and string manipulations
-def replacestrings(self, edit, type, substitutions, deepsubs):
+def replacestrings(self, edit, type, substitutions, deepsubs, linebreaks):
     strings_replaced = 0
     # select all and join
     self.view.run_command("select_all")
@@ -65,8 +72,10 @@ def replacestrings(self, edit, type, substitutions, deepsubs):
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
 
-    # Add back in newlines for specific tags
-    string = re.sub('(<!--|<br>|<img|<small)', '\\n\\1', string)
+    # Add back in whitespace
+    for old, new in linebreaks:
+        strings_replaced += len(re.findall(old, string))
+        string = re.sub(old, new, string)
 
     # Output to view
     self.view.replace(edit, sel[0], string)
