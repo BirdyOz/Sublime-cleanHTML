@@ -1,7 +1,7 @@
 import sublime, sublime_plugin, re
 
 class CleanHtml(sublime_plugin.TextCommand):
-    # Type = nomal - Remove spans, font-sizes, non-breaking spaces empty tags etc.
+    # Type = normal - Remove spans, font-sizes, non-breaking spaces empty tags etc.
     # Type = deep - Normal + style attributes
     # Type = table - Deep plus table tags
 
@@ -16,7 +16,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('&nbsp;', ' '),                                      # Non breaking spaces
         (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
         (' id *= *\"yui.*?\"', ''),                           # yui id's
-        ('(<li>)[\d\. \#\*•-]+', '\\1'),                      # li's that start with 1,•,#,* etc.
+        ('(<li>)[ \#\*•-]+', '\\1'),                          # li's that start with 1,•,#,* etc.
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
@@ -37,7 +37,9 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',   # specific empty tags
         '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',             # p>p or p>ul or p>div etc.
         '<br(?=>\\W*</)',                                     # br just inside closing tag
-        '<h[1-6]><(strong|b|i|em)'                            # headings with bolded text etc
+        '<h[1-6]><(strong|b|i|em)',                           # headings with bolded text etc
+        '/mod/glossary/showentry.php',                        # Remove Moodle glossary links
+        'class="ally-'                                        # Remove Ally spans
         ]
                                                               # ADD BACK IN WHITESPACE
         linebreaks = [                                        # ======================
