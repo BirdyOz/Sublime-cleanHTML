@@ -17,7 +17,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
         (' id *= *\"yui.*?\"', ''),                           # yui id's
         ('(<li>)[ \#\*•-]+', '\\1'),                          # li's that start with 1,•,#,* etc.
-        ('(<[^>]*class=\"[^>]*)(Bodycopyindented) *', '\\1'), # specific classes
+        ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
         ]
                                                               # DEEP SUBSTITUTIONS
@@ -39,7 +39,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<br(?=>\\W*</)',                                     # br just inside closing tag
         '<h[1-6]><(strong|b|i|em)',                           # headings with bolded text etc
         '/mod/glossary/showentry.php',                        # Remove Moodle glossary links
-        'class="ally-'                                        # Remove Ally spans
+        '<(a|img) [^>]+readspeaker\.com'                      # Remove Readspeaker links and icons
         ]
                                                               # ADD BACK IN WHITESPACE
         linebreaks = [                                        # ======================
