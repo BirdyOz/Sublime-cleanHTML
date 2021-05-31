@@ -11,41 +11,44 @@ class CleanHtml(sublime_plugin.TextCommand):
         status_msg = "Clean HTML = " + type + " cleaning"
         self.view.set_status('cleaning',status_msg)
 
-                                                              # NORMAL SUBSTITUTIONS
-        substitutions = [                                     # ====================
-        ('&nbsp;', ' '),                                      # Non breaking spaces
-        (' style *= *\"font-size: 1rem;\"', ''),              # font-sizes
-        (' id *= *\"yui.*?\"', ''),                           # yui id's
-        ('(<li>)[ \#\*•-]+', '\\1'),                          # li's that start with 1,•,#,* etc.
+                                                                             # NORMAL SUBSTITUTIONS
+        substitutions = [                                                    # ====================
+        ('&nbsp;', ' '),                                                     # Non breaking spaces
+        (' style *= *\"font-size: 1rem;\"', ''),                             # font-sizes
+        (' id *= *\"yui.*?\"', ''),                                          # yui id's
+        (' dir=\"ltr\" style=\"text-align: left;\"', ''),                    # yui id's
+        ('(<li>)[ \#\*•-]+', '\\1'),                                         # li's that start with 1,•,#,* etc.
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
-        ('(<[^>]*)(class|id|style)=\" *\"','\\1'),            # specific empty attributes
+        ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
+        (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
+        (' target="_blank"',''),                                             # Momentarily delete target="_blank"
+        ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
         ]
-                                                              # DEEP SUBSTITUTIONS
-        deepsubs = [                                          # ==================
-        (' style=\".*?\"',''),                                # Remove style attributes
-        (' [^a][\w-]+=" *"(?=.*?>)','')                       # Remove empty attributes that are not alt
+                                                                             # DEEP SUBSTITUTIONS
+        deepsubs = [                                                         # ==================
+        (' style=\".*?\"',''),                                               # Remove style attributes
+        (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
         ]
-                                                              # TAGS TO BE REMOVED
-        tags = [                                              # ==================
-        '<span',                                              # any span (with or without attributes)
-        '<section',                                           # any section
-        '<article',                                           # any article
-        '<div>',                                              # div without attribuites
-        '<li>\\W*<p',                                         # li>p
-        '<ul>\\W*<ul',                                        # ul>ul
-        '<ol>\\W*<ol',                                        # ol>ol
-        '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',   # specific empty tags
-        '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',             # p>p or p>ul or p>div etc.
-        '<br(?=>\\W*</)',                                     # br just inside closing tag
-        '<h[1-6]><(strong|b|i|em)',                           # headings with bolded text etc
-        '/mod/glossary/showentry.php',                        # Remove Moodle glossary links
-        '<(a|img) [^>]+readspeaker\.com'                      # Remove Readspeaker links and icons
+                                                                             # TAGS TO BE REMOVED
+        tags = [                                                             # ==================
+        '<span',                                                             # any span (with or without attributes)
+        '<section',                                                          # any section
+        '<article',                                                          # any article
+        '<div>',                                                             # div without attribuites
+        '<li>\\W*<p',                                                        # li>p
+        '<ul>\\W*<ul',                                                       # ul>ul
+        '<ol>\\W*<ol',                                                       # ol>ol
+        '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',                  # specific empty tags
+        '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',                            # p>p or p>ul or p>div etc.
+        '<h[1-6]><(strong|b|i|em)',                                          # headings with bolded text etc
+        '/mod/glossary/showentry.php',                                       # Remove Moodle glossary links
+        '<(a|img) [^>]+readspeaker\.com'                                     # Remove Readspeaker links and icons
         ]
-                                                              # ADD BACK IN WHITESPACE
-        linebreaks = [                                        # ======================
-        ('(<!--|<br>|<img|<small)', '\\n\\1'),                # breaks before certain tags
-        ('(<!-- Start [^>]*-->)', '\\n\\1'),                  # Extra line before Start of comment block
-        ('(<!-- End [^>]*-->)', '\\1\\n\\n')                  # Extra after end of comment block
+                                                                             # ADD BACK IN WHITESPACE
+        linebreaks = [                                                       # ======================
+        ('(<!--|<br>|<img|<small)', '\\n\\1'),                               # breaks before certain tags
+        ('(<!-- Start [^>]*-->)', '\\n\\1'),                                 # Extra line before Start of comment block
+        ('(<!-- End [^>]*-->)', '\\1\\n\\n')                                 # Extra after end of comment block
         ]
 
         replacestrings(self, edit, type, substitutions, deepsubs, linebreaks)
@@ -60,6 +63,11 @@ def replacestrings(self, edit, type, substitutions, deepsubs, linebreaks):
     # convert to string
     sel = self.view.sel()
     string = self.view.substr(sel[0])
+
+    # Fringe case.  If HTML contains <audio>, move this to top of page and clear floats
+    if "<audio" in string and not string.startswith('<audio'):
+        string = re.sub('(.*)(<audio.*?</audio>)(.*)','\\2<div class="clearfix container-fluid"></div>\\1\\3', string)
+
 
     # Loop through substitutions
     for old, new in substitutions:
@@ -101,6 +109,7 @@ def removetags(self, edit, type, tags):
 
         for rgn in self.view.find_all('<table|<tbody|<tr|<th|<thead|<td|<caption'):
             self.view.sel().add(rgn.end())
+
 
     # Update status image
     status_msg = "Tags removed = " + str(len(self.view.sel()))
