@@ -12,12 +12,17 @@ This ST3 plugin performs a range of HTML cleaning and code sanitisation function
 
 **Attribute removal**
 
-* font-sizes (style = "font-size....)
-* YUI id's created by the ATTO editor (id = "yui......)
+* font-sizes (style="font-size...")
+* YUI id's created by the ATTO editor (id="yui...")
+
+**External links**
+
+* Ensure all external href's open in new tab
 
 **Deep cleaning (optional)**
 
-* All style attributes (style = "....)
+* All style attributes (style="...")
+* Remove empty attributes (that are not alt="")
 
 **Table cleaning (optional)**
 
@@ -32,7 +37,7 @@ This plugin invokes functions from other Sublime Text Packages:
     <li><a href="https://packagecontrol.io/packages/HTML-CSS-JS%20Prettify" target="_blank">HTML-CSS-JS Prettify - Packages - Package Control</a></li>
 </ul>
 
-Please ensure that you have these plugins installed, prior to running CleanHTML
+Please ensure that you have these plugins installed, **prior to running CleanHTML**
 
 ## Usage
 
@@ -40,7 +45,7 @@ Please ensure that you have these plugins installed, prior to running CleanHTML
 2. Type 'Clean HTML'
 3. Choose cleaning mode (Normal/Deep/Table)
 
-Keboard shortcuts (Mac)
+## Keyboard shortcuts (Mac) - Sorry Windows users, feel free to set your own.
 
 * <kbd>CMD</kbd> + <kbd>Shift</kbd> + <kbd>\\</kbd> - Normal
 * <kbd>CMD</kbd> + <kbd>Opt</kbd> + <kbd>\\</kbd> - Deep
