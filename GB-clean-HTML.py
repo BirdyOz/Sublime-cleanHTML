@@ -16,17 +16,21 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('&nbsp;', ' '),                                                     # Non breaking spaces
         (' style *= *\"font-size: 1rem;\"', ''),                             # font-sizes
         (' id *= *\"yui.*?\"', ''),                                          # yui id's
-        (' dir=\"ltr\" style=\"text-align: left;\"', ''),                    # yui id's
+        (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
+        (' style=\"text-align: left;\"', ''),                                # redundant text aligns
         ('(<li>)[ \#\*•-]+', '\\1'),                                         # li's that start with 1,•,#,* etc.
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
         (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
+        ('<br>\w?</p>','</p>'),                                              # br just before a closing p
+        ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
+        ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
         (' target="_blank"',''),                                             # Momentarily delete target="_blank"
-        ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
+        ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"')          # Now add it back in for all external hrefs
         ]
                                                                              # DEEP SUBSTITUTIONS
         deepsubs = [                                                         # ==================
-        (' style=\".*?\"',''),                                               # Remove style attributes
+        (' style=\".*?\"',''),                                               # Remove all style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
         ]
                                                                              # TAGS TO BE REMOVED
