@@ -16,6 +16,14 @@
         }
     },
     {
+        "keys": ["ctrl+option+\\"],
+        "command": "clean_html",
+        "args":
+        {
+            "type": "mp"
+        }
+    },
+    {
         "keys": ["command+shift+option+\\"],
         "command": "clean_html",
         "args":

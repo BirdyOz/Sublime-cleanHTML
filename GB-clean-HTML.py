@@ -18,20 +18,36 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' id *= *\"yui.*?\"', ''),                                          # yui id's
         (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
         (' style=\"text-align: left;\"', ''),                                # redundant text aligns
-        ('(<li>)[ \#\*•-]+', '\\1'),                                         # li's that start with 1,•,#,* etc.
+        ('(<li>)[ \#\*•-]+', '\\1'),                                         # li's that start with •,#,* etc.
+        ('(<li>)[1-9]+\.* *', '\\1'),                                        # li's that start with a number
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
         (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
         ('<br>\w?</p>','</p>'),                                              # br just before a closing p
         ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
         ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
+        (' atto_image_button_text-bottom',''),                               # remove img classes added by the ATTO editor
         (' target="_blank"',''),                                             # Momentarily delete target="_blank"
-        ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"')          # Now add it back in for all external hrefs
+        ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
+        ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
+        '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
+        ('▼ Show attribution', '▽ Show attribution')
         ]
                                                                              # DEEP SUBSTITUTIONS
         deepsubs = [                                                         # ==================
         (' style=\".*?\"',''),                                               # Remove all style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
+        ]
+
+                                                                             # MELB POLY SUBSTITUTIONS
+        mpsubs = [                                                           # ==================
+        ('<div class="alert alert-warning" role="alert">',
+        '<div class="alert alert-success" role="alert">'),                   # Set alerts to green
+        ('<a.*?Show attribution</a>',''),                                    # Remove "show attribution"
+        ('<div class="source collapse m-0 p-0" id="show-',
+        '<div class="source m-0 p-0" id="show-'),                            # Remove "show attribution"
+        ('<br>(<a.*?</a>)\. Added',', \\1, added'),                          # Change attribution statement
+        ('target="_blank">Free to use</a>','target="_blank">Licence</a>')    # Change licence type
         ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
@@ -51,15 +67,16 @@ class CleanHtml(sublime_plugin.TextCommand):
                                                                              # ADD BACK IN WHITESPACE
         linebreaks = [                                                       # ======================
         ('(<!--|<br>|<img|<small)', '\\n\\1'),                               # breaks before certain tags
+        ('(<hr>)', '\\n\\n\\n\\1\\n\\n\\n'),                                 # Extra lines before and after HR's
         ('(<!-- Start [^>]*-->)', '\\n\\1'),                                 # Extra line before Start of comment block
         ('(<!-- End [^>]*-->)', '\\1\\n\\n')                                 # Extra after end of comment block
         ]
 
-        replacestrings(self, edit, type, substitutions, deepsubs, linebreaks)
+        replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, linebreaks)
         removetags(self, edit, type, tags)
 
 # Perform all text substitutions and string manipulations
-def replacestrings(self, edit, type, substitutions, deepsubs, linebreaks):
+def replacestrings(self, edit, type, substitutions, deepsubs,  mpsubs, linebreaks):
     strings_replaced = 0
     # select all and join
     self.view.run_command("select_all")
@@ -83,6 +100,14 @@ def replacestrings(self, edit, type, substitutions, deepsubs, linebreaks):
 
         # Loop through substitutions
         for old, new in deepsubs:
+            strings_replaced += len(re.findall(old, string))
+            string = re.sub(old, new, string)
+
+    # For MP
+    if type == "mp":
+
+        # Loop through substitutions
+        for old, new in mpsubs:
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
 

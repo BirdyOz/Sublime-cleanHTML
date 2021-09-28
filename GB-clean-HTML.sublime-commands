@@ -16,6 +16,14 @@
         }
     },
     {
+        "caption": "BirdyOz - Clean HTML (Melb Poly)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "mp"
+        }
+    },
+    {
         "caption": "BirdyOz - Clean HTML (Table plus Deep)",
         "command": "clean_html",
         "args":
