@@ -46,7 +46,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<a.*?Show attribution</a>',''),                                    # Remove "show attribution"
         ('<div class="source collapse m-0 p-0" id="show-',
         '<div class="source m-0 p-0" id="show-'),                            # Remove "show attribution"
-        ('<br>(<a.*?</a>)\. Added',', \\1, added'),                          # Change attribution statement
+        ('<br>(<a.*?</a>)\. Added',', \\1, added'),                          # Change Photo to Image
+        ('target="_blank">Photo</a> by','target="_blank">Image</a> by'),     # Change attribution statement
         ('target="_blank">Free to use</a>','target="_blank">Licence</a>')    # Change licence type
         ]
                                                                              # TAGS TO BE REMOVED
