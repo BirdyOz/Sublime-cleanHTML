@@ -18,7 +18,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' id *= *\"yui.*?\"', ''),                                          # yui id's
         (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
         (' style=\"text-align: left;\"', ''),                                # redundant text aligns
-        ('(<li>)[ \#\*•·-]+', '\\1'),                                         # li's that start with •,#,* etc.
+        ('(<li>)[ \#\*•·-]+', '\\1'),                                        # li's that start with •,#,* etc.
         ('(<li>)[1-9]+\.* *', '\\1'),                                        # li's that start with a number
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
@@ -26,8 +26,10 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<br>\w?</p>','</p>'),                                              # br just before a closing p
         ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
         ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
-        (' atto_image_button_text-bottom',''),                               # remove img classes added by the ATTO editor
-        ('(?<=<td)(?<!>) width="\d+\%?"',''),                                   # remove <td> widths
+        ('(<img[^>]+)width="\d+\%?" height="\d+\%?" ','\\1'),                # remove image dimensions
+        ('http://127.0.0.1.*?\#','#'),                                       # remove localhost prefix
+        (' atto_image_button_text-bottom',' w-100'),                         # remove img classes added by the ATTO editor
+        ('(?<=<td)(?<!>) width="\d+\%?"',''),                                # remove <td> widths
         (' valign="top"',''),                                                # remove <td> valign="top"
         (' target="_blank"',''),                                             # Momentarily delete target="_blank"
         ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
