@@ -1,4 +1,4 @@
-import sublime, sublime_plugin, re
+import sublime, sublime_plugin, re, sys
 
 class CleanHtml(sublime_plugin.TextCommand):
     # Type = normal - Remove spans, font-sizes, non-breaking spaces empty tags etc.
@@ -9,7 +9,8 @@ class CleanHtml(sublime_plugin.TextCommand):
 
         # Update status image
         status_msg = "Clean HTML = " + type + " cleaning"
-        self.view.set_status('cleaning',status_msg)
+        self.view.set_status("cleaning",status_msg)
+        sublime.set_timeout(lambda: self.view.erase_status("cleaning"), 8000)
 
                                                                              # NORMAL SUBSTITUTIONS
         substitutions = [                                                    # ====================
@@ -23,6 +24,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
         (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
+        ('<p><br></p>','<br>'),                                              # p's that only contain br
         ('<br>\w?</p>','</p>'),                                              # br just before a closing p
         ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
         ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
@@ -126,7 +128,9 @@ def replacestrings(self, edit, type, substitutions, deepsubs,  mpsubs, linebreak
 
     # Update status message
     status_msg = "Strings replaced = " + str(strings_replaced)
-    self.view.set_status('str_replaced',status_msg)
+
+    self.view.set_status("Strings replaced", status_msg)
+    sublime.set_timeout(lambda: self.view.erase_status("Strings replaced"), 8000)
 
 # Highlight and remove unneccesary tags
 def removetags(self, edit, type, tags):
@@ -147,7 +151,9 @@ def removetags(self, edit, type, tags):
 
     # Update status image
     status_msg = "Tags removed = " + str(len(self.view.sel()))
-    self.view.set_status('tags_removed',status_msg)
+
+    self.view.set_status("Tags removed", status_msg)
+    sublime.set_timeout(lambda: self.view.erase_status("Tags removed"), 8000)
 
     # Remove tags and prettify
     self.view.run_command("emmet_remove_tag")
