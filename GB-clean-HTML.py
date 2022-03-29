@@ -20,7 +20,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
         (' style=\"text-align: left;\"', ''),                                # redundant text aligns
         ('(<li>)[ \#\*•·-]+', '\\1'),                                        # li's that start with •,#,* etc.
-        ('(<li>)[1-9]+\.* *', '\\1'),                                        # li's that start with a number
+        ('(<li>)[1-9]+\. *', '\\1'),                                        # li's that start with a number
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
         (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
