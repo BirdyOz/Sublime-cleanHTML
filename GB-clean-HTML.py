@@ -60,7 +60,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
-        '<span',                                                             # any span (with or without attributes)
+        '<span style="font-size: 1rem;"',                                    # spans with 1rem sizing (Moodle ATTO artefact)
         '<section',                                                          # any section
         '<article',                                                          # any article
         '<div>',                                                             # div without attribuites
