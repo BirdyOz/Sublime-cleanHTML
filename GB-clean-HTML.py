@@ -37,7 +37,9 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
         ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
         '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
-        ('▼ Show attribution', '▽ Show attribution')
+        ('▼ Show attribution', '▽ Show attribution'),
+        ('data-mce-.*?".*?" ?', ''),                                          # Canvas MCE editor
+        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
         ]
                                                                              # DEEP SUBSTITUTIONS
         deepsubs = [                                                         # ==================
