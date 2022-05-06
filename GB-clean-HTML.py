@@ -28,7 +28,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<br>\w?</p>','</p>'),                                              # br just before a closing p
         ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
         ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
-        ('(<img[^>]+)width="\d+\%?" height="\d+\%?" ','\\1'),                # remove image dimensions
+        # ('(<img[^>]+)width="\d+\%?" height="\d+\%?" ','\\1'),                # remove image dimensions
         ('http://127.0.0.1.*?\#','#'),                                       # remove localhost prefix
         (' atto_image_button_text-bottom',' w-100'),                         # remove img classes added by the ATTO editor
         ('(?<=<td)(?<!>) width="\d+\%?"',''),                                # remove <td> widths
