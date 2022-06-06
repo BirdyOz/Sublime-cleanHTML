@@ -28,7 +28,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<br>\w?</p>','</p>'),                                              # br just before a closing p
         ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
         ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
-        # ('(<img[^>]+)width="\d+\%?" height="\d+\%?" ','\\1'),                # remove image dimensions
+        # ('(<img[^>]+)width="\d+\%?" height="\d+\%?" ','\\1'),              # remove image dimensions
         ('http://127.0.0.1.*?\#','#'),                                       # remove localhost prefix
         (' atto_image_button_text-bottom',' w-100'),                         # remove img classes added by the ATTO editor
         ('(?<=<td)(?<!>) width="\d+\%?"',''),                                # remove <td> widths
@@ -37,14 +37,20 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
         ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
         '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
-        ('▼ Show attribution', '▽ Show attribution'),
-        ('data-mce-.*?".*?" ?', ''),                                          # Canvas MCE editor
-        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
+        ('▼ Show attribution', '▽ Show attribution')
         ]
                                                                              # DEEP SUBSTITUTIONS
         deepsubs = [                                                         # ==================
         (' style=\".*?\"',''),                                               # Remove all style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
+        ]
+
+                                                                             # CANVASLMS SUBSTITUTIONS
+        canvassubs = [                                                       # ==================
+        ('data-mce-.*?".*?" ?', ''),                                         # Canvas MCE editor
+        (' target="_blank"',''),                                             # Delete all target="_blank"
+        ('<!--.*?-->"',''),                                                  # Delete all comments
+        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
         ]
 
                                                                              # MELB POLY SUBSTITUTIONS
@@ -81,11 +87,11 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<!-- End [^>]*-->)', '\\1\\n\\n')                                 # Extra after end of comment block
         ]
 
-        replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, linebreaks)
+        replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks)
         removetags(self, edit, type, tags)
 
 # Perform all text substitutions and string manipulations
-def replacestrings(self, edit, type, substitutions, deepsubs,  mpsubs, linebreaks):
+def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks):
     strings_replaced = 0
     # select all and join
     self.view.run_command("select_all")
@@ -109,6 +115,14 @@ def replacestrings(self, edit, type, substitutions, deepsubs,  mpsubs, linebreak
 
         # Loop through substitutions
         for old, new in deepsubs:
+            strings_replaced += len(re.findall(old, string))
+            string = re.sub(old, new, string)
+
+    # If I am in CanvasLMS
+    if "class=\"ghost-text-message\"" in string:
+
+        # Loop through substitutions
+        for old, new in canvassubs:
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
 
