@@ -20,7 +20,7 @@
         "command": "clean_html",
         "args":
         {
-            "type": "mp"
+            "type": "canvas"
         }
     },
     {

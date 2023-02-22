@@ -49,7 +49,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         canvassubs = [                                                       # ==================
         ('data-mce-.*?".*?" ?', ''),                                         # Canvas MCE editor
         (' target="_blank"',''),                                             # Delete all target="_blank"
-        ('<!--.*?-->"',''),                                                  # Delete all comments
+        ('<!--.*?-->',''),                                                   # Delete all comments
+        ('<br>',''),                                                         # Delete <br>
         ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
         ]
 
@@ -67,6 +68,7 @@ class CleanHtml(sublime_plugin.TextCommand):
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
         '<span style="font-size: 1rem;"',                                    # spans with 1rem sizing (Moodle ATTO artefact)
+        '<span lang="EN-US"',                                                # spans with lang
         '<section',                                                          # any section
         '<article',                                                          # any article
         '<div>',                                                             # div without attribuites
@@ -77,6 +79,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',                            # p>p or p>ul or p>div etc.
         '<h[1-6]><(strong|b|i|em)',                                          # headings with bolded text etc
         '/mod/glossary/showentry.php',                                       # Remove Moodle glossary links
+        '<a name="',                                                        # Remove MsWord internal anchors
         '<(a|img) [^>]+readspeaker\.com'                                     # Remove Readspeaker links and icons
         ]
                                                                              # ADD BACK IN WHITESPACE
@@ -118,26 +121,17 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
 
-    # If I am in CanvasLMS
-    if "class=\"ghost-text-message\"" in string:
-
+    # For Canvas
+    if type == "canvas":
         # Loop through substitutions
         for old, new in canvassubs:
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
-
-    # For MP
-    if type == "mp":
-
-        # Loop through substitutions
-        for old, new in mpsubs:
+    else:
+        # Add back in whitespace
+        for old, new in linebreaks:
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
-
-    # Add back in whitespace
-    for old, new in linebreaks:
-        strings_replaced += len(re.findall(old, string))
-        string = re.sub(old, new, string)
 
     # Output to view
     self.view.replace(edit, sel[0], string)
@@ -175,4 +169,4 @@ def removetags(self, edit, type, tags):
     self.view.run_command("emmet_remove_tag")
     self.view.run_command("select_all")
     self.view.run_command("htmlprettify")
-    self.view.sel().clear()
+    # self.view.sel().clear()
