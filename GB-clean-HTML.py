@@ -15,12 +15,12 @@ class CleanHtml(sublime_plugin.TextCommand):
                                                                              # NORMAL SUBSTITUTIONS
         substitutions = [                                                    # ====================
         ('&nbsp;', ' '),                                                     # Non breaking spaces
-        (' style *= *\"font-size: 1rem;\"', ''),                             # font-sizes
+        (' style *= *\"font-size: 1rem;.*?\"', ''),                          # font-sizes
         (' id *= *\"yui.*?\"', ''),                                          # yui id's
         (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
         (' style=\"text-align: left;\"', ''),                                # redundant text aligns
         ('(<li>)[ \#\*•·-]+', '\\1'),                                        # li's that start with •,#,* etc.
-        ('(<li>)[1-9]+\. *', '\\1'),                                        # li's that start with a number
+        ('(<li>)[1-9]+\. *', '\\1'),                                         # li's that start with a number
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
         (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
@@ -67,7 +67,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
-        '<span style="font-size: 1rem;"',                                    # spans with 1rem sizing (Moodle ATTO artefact)
+        '<span style="font-size: 1rem;.*?\""',                               # spans with 1rem sizing (Moodle ATTO artefact)
         '<span lang="EN-US"',                                                # spans with lang
         '<section',                                                          # any section
         '<article',                                                          # any article
@@ -79,7 +79,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',                            # p>p or p>ul or p>div etc.
         '<h[1-6]><(strong|b|i|em)',                                          # headings with bolded text etc
         '/mod/glossary/showentry.php',                                       # Remove Moodle glossary links
-        '<a name="',                                                        # Remove MsWord internal anchors
+        '<a name="',                                                         # Remove MsWord internal anchors
         '<(a|img) [^>]+readspeaker\.com'                                     # Remove Readspeaker links and icons
         ]
                                                                              # ADD BACK IN WHITESPACE
