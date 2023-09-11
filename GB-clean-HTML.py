@@ -55,11 +55,16 @@ class CleanHtml(sublime_plugin.TextCommand):
 
                                                                              # MELB POLY SUBSTITUTIONS
         mpsubs = [                                                           # ==================
-        ('<p class="bulletlist".*?>(.*?)</p>','<li>\\1</li>'),               # Make para's into lists
+        ('<p class="bulletlist".*?>(.*?)</p>','<li>\\1</li>'),               # Convert p.bulletlist into li
+        ('((<li>.*?</li> )+)','<ul>\\1</ul>'),                               # Wrap converted list groups in ul
         ('<span.*?>',''),                                                    # All open spans
         ('</span.*?>',''),                                                   # All closed spans
         ('<p>\n*<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>',            # float images right
-        '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>')
+        '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
+        ('<table class="TableGrid".*?<p class="learningactivity">.*?<td class="TableGrid">(.*?)</td>.*?</table>', # Learning activities
+        '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="card-title text-danger"><i aria-hidden="true" class="fa fa-tasks"></i> Learning Activity</h4> \\1 </div> </div>'),
+        ('<p class="weblink">(.*?)</p> <p><a href="https://www\.youtube\.com/watch\?v=(.*?)".*?</p>',  # YT video
+        '<div class="clearfix container-fluid"></div> <div class="card"> <div class="card-body"> <h4 class="text-danger yt-title"><i class="fa fa-play-circle-o"></i> \\1</h4> <div class="embed-responsive embed-responsive-16by9"> <iframe id="yt-placeholder" class="embed-responsive-item vjs-tech" frameborder="0" allowfullscreen="1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" title="\\1" width="100%" height="100%" src="https://www.youtube.com/embed/\\2?modestbranding=1&amp;rel=0&amp;enablejsapi=1&amp;origin=https%3A%2F%2Fbirdyoz.github.io&amp;widgetid=1" data-gtm-yt-inspected-4="true"></iframe> </div> </div> </div>')
         ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
