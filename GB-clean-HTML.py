@@ -44,7 +44,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' style=\".*?\"',''),                                               # Remove all style attributes
         (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
         ]
-
                                                                              # CANVASLMS SUBSTITUTIONS
         canvassubs = [                                                       # ==================
         ('data-mce-.*?".*?" ?', ''),                                         # Canvas MCE editor
@@ -56,14 +55,11 @@ class CleanHtml(sublime_plugin.TextCommand):
 
                                                                              # MELB POLY SUBSTITUTIONS
         mpsubs = [                                                           # ==================
-        ('<div class="alert alert-warning" role="alert">',
-        '<div class="alert alert-success" role="alert">'),                   # Set alerts to green
-        ('<a.*?Show attribution</a>',''),                                    # Remove "show attribution"
-        ('<div class="source collapse m-0 p-0" id="show-',
-        '<div class="source m-0 p-0" id="show-'),                            # Remove "show attribution"
-        ('<br>(<a.*?</a>)\. Added',', \\1, added'),                          # Change Photo to Image
-        ('target="_blank">Photo</a> by','target="_blank">Image</a> by'),     # Change attribution statement
-        ('target="_blank">Free to use</a>','target="_blank">Licence</a>')    # Change licence type
+        ('<p class="bulletlist".*?>(.*?)</p>','<li>\\1</li>'),               # Make para's into lists
+        ('<span.*?>',''),                                                    # All open spans
+        ('</span.*?>',''),                                                   # All closed spans
+        ('<p>\n*<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>',            # float images right
+        '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>')
         ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
@@ -82,6 +78,10 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<a name="',                                                         # Remove MsWord internal anchors
         '<(a|img) [^>]+readspeaker\.com'                                     # Remove Readspeaker links and icons
         ]
+                                                                             # ADDITIONAL MP TAGS
+        mptags = [                                                           # ==================
+        # '<span',                                                              # Remove all spans
+        ]
                                                                              # ADD BACK IN WHITESPACE
         linebreaks = [                                                       # ======================
         ('(<!--|<br>|<img|<small)', '\\n\\1'),                               # breaks before certain tags
@@ -91,7 +91,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ]
 
         replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks)
-        removetags(self, edit, type, tags)
+        removetags(self, edit, type, tags, mptags)
 
 # Perform all text substitutions and string manipulations
 def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks):
@@ -121,6 +121,13 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
             strings_replaced += len(re.findall(old, string))
             string = re.sub(old, new, string)
 
+    if type == "mp":
+
+        # Loop through substitutions
+        for old, new in mpsubs:
+            strings_replaced += len(re.findall(old, string))
+            string = re.sub(old, new, string)
+
     # For Canvas
     if type == "canvas":
         # Loop through substitutions
@@ -143,8 +150,11 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
     sublime.set_timeout(lambda: self.view.erase_status("Strings replaced"), 8000)
 
 # Highlight and remove unneccesary tags
-def removetags(self, edit, type, tags):
+def removetags(self, edit, type, tags, mptags):
     self.view.sel().clear()
+
+    if type == "mp":
+        tags.extend(mptags)
 
     # Select all tags
     for tag in tags:
@@ -169,4 +179,4 @@ def removetags(self, edit, type, tags):
     self.view.run_command("emmet_remove_tag")
     self.view.run_command("select_all")
     self.view.run_command("htmlprettify")
-    # self.view.sel().clear()
+    self.view.sel().clear()

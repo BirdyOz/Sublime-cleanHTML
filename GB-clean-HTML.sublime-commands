@@ -30,5 +30,13 @@
         {
             "type": "table"
         }
+    },
+    {
+        "caption": "BirdyOz - Clean HTML (Melb Poly)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "mp"
+        }
     }
 ]
