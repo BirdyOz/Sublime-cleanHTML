@@ -38,5 +38,13 @@
         {
             "type": "mp"
         }
+    },
+    {
+        "caption": "BirdyOz - Clean HTML (Melb Poly - Extended)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "mpextended"
+        }
     }
 ]

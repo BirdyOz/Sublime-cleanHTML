@@ -39,38 +39,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
         ('▼ Show attribution', '▽ Show attribution')
         ]
-                                                                             # DEEP SUBSTITUTIONS
-        deepsubs = [                                                         # ==================
-        (' style=\".*?\"',''),                                               # Remove all style attributes
-        (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
-        ]
-                                                                             # CANVASLMS SUBSTITUTIONS
-        canvassubs = [                                                       # ==================
-        ('data-mce-.*?".*?" ?', ''),                                         # Canvas MCE editor
-        (' target="_blank"',''),                                             # Delete all target="_blank"
-        ('<!--.*?-->',''),                                                   # Delete all comments
-        ('<br>',''),                                                         # Delete <br>
-        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
-        ]
-
-                                                                             # MELB POLY SUBSTITUTIONS
-        mpsubs = [                                                           # ==================
-        ('<p class="bulletlist".*?>(.*?)</p>','<li>\\1</li>'),               # Convert p.bulletlist into li
-        ('(( <li>.*?</li>)+)','<ul>\\1</ul>'),                               # Wrap converted list groups in ul
-        ('<span.*?>',''),                                                    # All open spans
-        ('</span.*?>',''),                                                   # All closed spans
-        ('(<p class="importantfact">.*?</p>)',                               # Wrap 'importantfact' in alert.info
-        '<div class="alert alert-info" role="alert"> \\1 </div>'),
-        ('<p.*?>\n*<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>',            # float images right
-        '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
-        ('<table class="TableGrid".*?<p class="learningactivity">.*?<td class="TableGrid">(.*?)</td>.*?</table>', # Learning activities
-        '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="card-title text-danger"><i aria-hidden="true" class="fa fa-tasks"></i> Learning Activity</h4> \\1 </div> </div>'),
-        ('<p class="weblink">(Weblink:|)*(.*?)</p> <p><a href="https://(youtu\.be/|www\.youtube\.com/watch\?v=)(.*?)".*?</p>',  # YT video
-        '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="text-danger yt-title"><i class="fa fa-play-circle-o"></i> \\2</h4> <div class="embed-responsive embed-responsive-16by9"> <iframe id="yt-placeholder" class="embed-responsive-item vjs-tech" frameborder="0" allowfullscreen="1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" title="\\2" width="100%" height="100%" src="https://www.youtube.com/embed/\\4?modestbranding=1&amp;rel=0&amp;enablejsapi=1&amp;origin=https%3A%2F%2Fbirdyoz.github.io&amp;widgetid=1" data-gtm-yt-inspected-4="true"></iframe> </div> </div> </div>'),
-        ('(<p class="weblink">.*?</p> <p><a href="http.*?</p>)'              # Weblinks
-            ,'<div class="alert alert-secondary" role="alert"> \\1 </div>'),
-        (' class="weblink"','')                                              # Remove weblink class to stop double processsing
-        ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
         '<span style="font-size: 1rem;.*?\""',                               # spans with 1rem sizing (Moodle ATTO artefact)
@@ -88,10 +56,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<a name="',                                                         # Remove MsWord internal anchors
         '<(a|img) [^>]+readspeaker\.com'                                     # Remove Readspeaker links and icons
         ]
-                                                                             # ADDITIONAL MP TAGS
-        mptags = [                                                           # ==================
-        # '<span',                                                              # Remove all spans
-        ]
                                                                              # ADD BACK IN WHITESPACE
         linebreaks = [                                                       # ======================
         ('(<!--|<br>|<img|<small)', '\\n\\1'),                               # breaks before certain tags
@@ -100,11 +64,50 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<!-- End [^>]*-->)', '\\1\\n\\n')                                 # Extra after end of comment block
         ]
 
-        replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks)
-        removetags(self, edit, type, tags, mptags)
+        # ALTERNATIVE SUBSTITUTIONS
+        # =========================
+                                                                             # DEEP SUBSTITUTIONS
+        deepsubs = [                                                         # ==================
+        (' style=\".*?\"',''),                                               # Remove all style attributes
+        (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
+        ]
+                                                                             # CANVASLMS SUBSTITUTIONS
+        canvassubs = [                                                       # ==================
+        ('data-mce-.*?".*?" ?', ''),                                         # Canvas MCE editor
+        (' target="_blank"',''),                                             # Delete all target="_blank"
+        ('<!--.*?-->',''),                                                   # Delete all comments
+        ('<br>',''),                                                         # Delete <br>
+        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
+        ]
+                                                                             # MELB POLY SUBSTITUTIONS
+        mpsubs = [                                                           # ==================
+        ('<p class="bulletlist".*?>(.*?)</p>','<li>\\1</li>'),               # Convert p.bulletlist into li
+        ('(( <li>.*?</li>)+)','<ul>\\1</ul>'),                               # Wrap converted list groups in ul
+        ('<span.*?>',''),                                                    # All open spans
+        ('</span.*?>',''),                                                   # All closed spans
+        # Wrap '.importantfact' in alert.info
+        ('(<p class="importantfact">.*?</p>)', '<div class="alert alert-info" role="alert"> \\1 </div>'),
+        # float images right
+        ('<p.*?>\n*<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>', '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
+        # Learning activities
+        ('<table class="TableGrid".*?<p class="learningactivity">.*?<td class="TableGrid">(.*?)</td>.*?</table>', '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="card-title text-danger"><i aria-hidden="true" class="fa fa-tasks"></i> Learning Activity</h4> \\1 </div> </div>'),
+        # Youtube video
+        ('<p class="weblink">(Weblink:|)*(.*?)</p> <p><a href="https://(youtu\.be/|www\.youtube\.com/watch\?v=)(.*?)".*?</p>', '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="text-danger yt-title"><i class="fa fa-play-circle-o"></i> \\2</h4> <div class="embed-responsive embed-responsive-16by9"> <iframe id="yt-placeholder" class="embed-responsive-item vjs-tech" frameborder="0" allowfullscreen="1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" title="\\2" width="100%" height="100%" src="https://www.youtube.com/embed/\\4?modestbranding=1&amp;rel=0&amp;enablejsapi=1&amp;origin=https%3A%2F%2Fbirdyoz.github.io&amp;widgetid=1" data-gtm-yt-inspected-4="true"></iframe> </div> </div> </div>'),
+        # Weblinks
+        ('(<p class="weblink">.*?</p> <p><a href="http.*?</p>)','<div class="alert alert-secondary" role="alert"> \\1 </div>'),
+        # Remove .weblink to prevent double processsing MS Word links and YT vids
+        (' class="weblink"','')
+        ]
+
+        extendedmpsubs = [
+        # FOR MP TO ADD THEIR OWN SUBSITUTIONS
+        ]
+
+        replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks, extendedmpsubs)
+        removetags(self, edit, type, tags)
 
 # Perform all text substitutions and string manipulations
-def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks):
+def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs, linebreaks, extendedmpsubs):
     strings_replaced = 0
     # select all and join
     self.view.run_command("select_all")
@@ -118,25 +121,22 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
         string = re.sub('(.*)(<audio.*?</audio>)(.*)','\\2<div class="clearfix container-fluid"></div>\\1\\3', string)
 
 
+    # Account for additional substitutions
+
+    if type == "mp":
+        substitutions.extend(mpsubs)
+
+    if type == "mpextended":
+        substitutions.extend(mpsubs)
+        substitutions.extend(extendedmpsubs)
+
+    if type == "deep" or type == "table":
+        substitutions.extend(deepsubs)
+
     # Loop through substitutions
     for old, new in substitutions:
         strings_replaced += len(re.findall(old, string))
         string = re.sub(old, new, string)
-
-    # For Deep and table Clean
-    if type == "deep" or type == "table":
-
-        # Loop through substitutions
-        for old, new in deepsubs:
-            strings_replaced += len(re.findall(old, string))
-            string = re.sub(old, new, string)
-
-    if type == "mp":
-
-        # Loop through substitutions
-        for old, new in mpsubs:
-            strings_replaced += len(re.findall(old, string))
-            string = re.sub(old, new, string)
 
     # For Canvas
     if type == "canvas":
@@ -160,11 +160,8 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
     sublime.set_timeout(lambda: self.view.erase_status("Strings replaced"), 8000)
 
 # Highlight and remove unneccesary tags
-def removetags(self, edit, type, tags, mptags):
+def removetags(self, edit, type, tags):
     self.view.sel().clear()
-
-    if type == "mp":
-        tags.extend(mptags)
 
     # Select all tags
     for tag in tags:
@@ -174,7 +171,6 @@ def removetags(self, edit, type, tags, mptags):
 
     # If cleaning tables as well
     if type == "table":
-
         for rgn in self.view.find_all('<table|<tbody|<tr|<th|<thead|<td|<caption'):
             self.view.sel().add(rgn.end())
 
