@@ -93,8 +93,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<table class="TableGrid".*?<p class="learningactivity">.*?<td class="TableGrid">(.*?)</td>.*?</table>', '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="card-title text-danger"><i aria-hidden="true" class="fa fa-tasks"></i> Learning Activity</h4> \\1 </div> </div>'),
         # Youtube video
         ('<p class="weblink">(Weblink:|)*(.*?)</p> <p><a href="https://(youtu\.be/|www\.youtube\.com/watch\?v=)(.*?)".*?</p>', '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="text-danger yt-title"><i class="fa fa-play-circle-o"></i> \\2</h4> <div class="embed-responsive embed-responsive-16by9"> <iframe id="yt-placeholder" class="embed-responsive-item vjs-tech" frameborder="0" allowfullscreen="1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" title="\\2" width="100%" height="100%" src="https://www.youtube.com/embed/\\4?modestbranding=1&amp;rel=0&amp;enablejsapi=1&amp;origin=https%3A%2F%2Fbirdyoz.github.io&amp;widgetid=1" data-gtm-yt-inspected-4="true"></iframe> </div> </div> </div>'),
-        # Weblinks
-        ('(<p class="weblink">.*?</p> <p><a href="http.*?</p>)','<div class="alert alert-secondary" role="alert"> \\1 </div>'),
+        # Weblinks #TODO - Remove alert.   Collapse to one line
+        ('<p class="weblink">(Weblink:|)*(.*?)</p> <p><a href="(http.*?)".*?</p>','<p>Weblink: <strong><a href="\\3" target="_blank">\\2</a></strong></p>'),
         # Remove .weblink to prevent double processsing MS Word links and YT vids
         (' class="weblink"','')
         ]
@@ -127,7 +127,6 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
         substitutions.extend(mpsubs)
 
     if type == "mpextended":
-        substitutions.extend(mpsubs)
         substitutions.extend(extendedmpsubs)
 
     if type == "deep" or type == "table":
