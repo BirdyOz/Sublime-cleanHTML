@@ -12,6 +12,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         self.view.set_status("cleaning",status_msg)
         sublime.set_timeout(lambda: self.view.erase_status("cleaning"), 8000)
 
+
+
                                                                              # NORMAL SUBSTITUTIONS
         substitutions = [                                                    # ====================
         ('&nbsp;', ' '),                                                     # Non breaking spaces
@@ -81,14 +83,23 @@ class CleanHtml(sublime_plugin.TextCommand):
         ]
                                                                              # MELB POLY SUBSTITUTIONS
         mpsubs = [                                                           # ==================
-        ('<p class="bulletlist".*?>(.*?)</p>','<li>\\1</li>'),               # Convert p.bulletlist into li
+        ('<p class="(bulletlist|standardbulletpoint)".*?>(.*?)</p>','<li>\\2</li>'), # Convert p bullets into li
         ('(( <li>.*?</li>)+)','<ul>\\1</ul>'),                               # Wrap converted list groups in ul
         ('<span.*?>',''),                                                    # All open spans
         ('</span.*?>',''),                                                   # All closed spans
-        # Wrap '.importantfact' in alert.info
-        ('(<p class="importantfact">.*?</p>)', '<div class="alert alert-info" role="alert"> \\1 </div>'),
-        # float images right
-        ('<p.*?>\n*<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>', '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
+        ('<p[^>]*>\n*(<img.*?>)</p>', '\\1'),                                # Remove p tags around images (to avoid confusion with other paras)
+
+
+        # Images inside table cells. Make 100% of containing td.
+        ('<img src="(.*?)".*?longdesc="(.*?)".*?<p.*?>(.*?)</p>(?=.*?</td>)', '<figure class="figure border rounded p-1 bg-light text-right w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
+
+
+        # Alternative, with non-capture groups
+        # ('(?:<td.*\n*.*?<img src=")(.*?)".*?longdesc="(.*?)".*?<p.*?>(.*?)</p>(?:.*?</td>)', '\\1<figure class="figure border rounded p-1 bg-light text-right w-100"> <img class="w-100" src="\\2" alt="\\3"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\4 </small> </figcaption> </figure>'),
+
+
+        # For remaining images not with tables, float images right
+        # ('<p.*?>\n*<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>', '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
         # Learning activities
         ('<table class="TableGrid".*?<p class="learningactivity">.*?<td class="TableGrid">(.*?)</td>.*?</table>', '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="card-title text-danger"><i aria-hidden="true" class="fa fa-tasks"></i> Learning Activity</h4> \\1 </div> </div>'),
         # Youtube video
@@ -96,7 +107,11 @@ class CleanHtml(sublime_plugin.TextCommand):
         # Weblinks #TODO - Remove alert.   Collapse to one line
         ('<p class="weblink">(Weblink:|)*(.*?)</p> <p><a href="(http.*?)".*?</p>','<p>Weblink: <strong><a href="\\3" target="_blank">\\2</a></strong></p>'),
         # Remove .weblink to prevent double processsing MS Word links and YT vids
-        (' class="weblink"','')
+        (' class="weblink"',''),
+        # Swap MSWord Table styles for Bootstrap Tables
+        ('<table.*?>','<table class="table table-striped">'),
+         # Wrap '.importantfact' in alert.info
+        ('(<p class="importantfact">.*?</p>)', '<div class="alert alert-info" role="alert"> \\1 </div>'),
         ]
 
         extendedmpsubs = [
@@ -183,5 +198,5 @@ def removetags(self, edit, type, tags):
     # Remove tags and prettify
     self.view.run_command("emmet_remove_tag")
     self.view.run_command("select_all")
-    self.view.run_command("htmlprettify")
+    # self.view.run_command("htmlprettify")
     self.view.sel().clear()
