@@ -12,8 +12,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         self.view.set_status("cleaning",status_msg)
         sublime.set_timeout(lambda: self.view.erase_status("cleaning"), 8000)
 
-
-
                                                                              # NORMAL SUBSTITUTIONS
         substitutions = [                                                    # ====================
         ('&nbsp;', ' '),                                                     # Non breaking spaces
@@ -94,7 +92,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<img src="(.*?)" longdesc="(.*?)".*?(<a.*?)</p>', '<figure class="figure border rounded p-1 bg-light text-right float-right ml-4 col-5 w-100"> <img class="w-100" src="\\1" alt="\\2"> <figcaption class="figure-caption text-muted small fw-lighter"> <small> \\3 </small> </figcaption> </figure>'),
         # If I am an image in a table, reset to w-100
         ('float-right ml-4 col-5(?=.*?</td>)',''),
-
         # Learning activities
         ('<table class="TableGrid".*?<p class="learningactivity">.*?<td class="TableGrid">(.*?)</td>.*?</table>', '<div class="clearfix container-fluid"></div> <div class="card mt-1 mb-1"> <div class="card-body"> <h4 class="card-title text-danger"><i aria-hidden="true" class="fa fa-tasks"></i> Learning Activity</h4> \\1 </div> </div>'),
         # Youtube video
@@ -107,7 +104,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<table.*?>','<table class="table table-striped table-bordered">'),
         ('<thead.*?>','<thead class="thead-dark">'),
         ('(<t[r|d|h]) .*?>','\\1>'),
-
          # Wrap '.importantfact' in alert.info
         ('(<p class="importantfact">.*?</p>)', '<div class="alert alert-info" role="alert"> \\1 </div>'),
         ]
@@ -135,7 +131,6 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
 
 
     # Account for additional substitutions
-
     if type == "mp":
         substitutions.extend(mpsubs)
 
