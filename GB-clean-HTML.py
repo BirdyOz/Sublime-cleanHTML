@@ -104,7 +104,10 @@ class CleanHtml(sublime_plugin.TextCommand):
         # Remove .weblink to prevent double processsing MS Word links and YT vids
         (' class="weblink"',''),
         # Swap MSWord Table styles for Bootstrap Tables
-        ('<table.*?>','<table class="table table-striped">'),
+        ('<table.*?>','<table class="table table-striped table-bordered">'),
+        ('<thead.*?>','<thead class="thead-dark">'),
+        ('(<t[r|d|h]) .*?>','\\1>'),
+
          # Wrap '.importantfact' in alert.info
         ('(<p class="importantfact">.*?</p>)', '<div class="alert alert-info" role="alert"> \\1 </div>'),
         ]
