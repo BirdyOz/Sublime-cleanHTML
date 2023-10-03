@@ -68,8 +68,9 @@ class CleanHtml(sublime_plugin.TextCommand):
         # =========================
                                                                              # DEEP SUBSTITUTIONS
         deepsubs = [                                                         # ==================
-        (' style=\".*?\"',''),                                               # Remove all style attributes
-        (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
+        (' \[OPTIONAL\] ',' ')                                               # Remove all style attributes
+        # (' style=\".*?\"',''),                                               # Remove all style attributes
+        # (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
         ]
                                                                              # CANVASLMS SUBSTITUTIONS
         canvassubs = [                                                       # ==================
