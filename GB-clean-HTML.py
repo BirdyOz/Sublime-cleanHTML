@@ -43,6 +43,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         tags = [                                                             # ==================
         '<span style="font-size: 1rem;.*?\""',                               # spans with 1rem sizing (Moodle ATTO artefact)
         '<span lang="EN-US"',                                                # spans with lang
+        '<span style="color:',                                                # spans with lang
         '<section',                                                          # any section
         '<article',                                                          # any article
         '<div>',                                                             # div without attribuites
@@ -78,6 +79,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' target="_blank"',''),                                             # Delete all target="_blank"
         ('<!--.*?-->',''),                                                   # Delete all comments
         ('<br>',''),                                                         # Delete <br>
+        (' data-mce-style=".*?"',''),                                        # Delete data attributes
         ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
         ]
                                                                              # MELB POLY SUBSTITUTIONS
