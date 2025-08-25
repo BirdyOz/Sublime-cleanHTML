@@ -37,7 +37,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
         ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
         '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
-        ('▼ Show attribution', '▽ Show attribution')
+        ('▼ Show attribution', '▽ Show attribution'),
+        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
         ]
                                                                              # TAGS TO BE REMOVED
         tags = [                                                             # ==================
@@ -80,7 +81,6 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<!--.*?-->',''),                                                   # Delete all comments
         ('<br>',''),                                                         # Delete <br>
         (' data-mce-style=".*?"',''),                                        # Delete data attributes
-        ('<div style="display: block;" class="ghost-text-message">Connected! You can switch to your editor</div>','')
         ]
                                                                              # MELB POLY SUBSTITUTIONS
         mpsubs = [                                                           # ==================
