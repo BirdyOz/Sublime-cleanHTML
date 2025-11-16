@@ -81,6 +81,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('<!--.*?-->',''),                                                   # Delete all comments
         ('<br>',''),                                                         # Delete <br>
         (' data-mce-style=".*?"',''),                                        # Delete data attributes
+        ('9864','9948'),('9865','9949'),('9866','9947'),('9867','9946'),('9868','9945'),('9869','9944'),('9870','9943'),('9871','9942'),('9872','9941'),('9873','9940')
         ]
                                                                              # MELB POLY SUBSTITUTIONS
         mpsubs = [                                                           # ==================
