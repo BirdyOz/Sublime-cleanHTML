@@ -30,13 +30,5 @@
         {
             "type": "table"
         }
-    },
-    {
-        "keys": ["command+ctrl+option+\\"],
-        "command": "clean_html",
-        "args":
-        {
-            "type": "mp"
-        }
     }
 ]
