@@ -19,21 +19,23 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' id *= *\"yui.*?\"', ''),                                          # yui id's
         (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
         (' style=\"text-align: left;\"', ''),                                # redundant text aligns
-        ('(<li>)[ \#\*•·-]+', '\\1'),                                        # li's that start with •,#,* etc.
-        ('(<li>)[1-9]+\. *', '\\1'),                                         # li's that start with a number
+        ('(<li>)[ \\#\\*•·-]+', '\\1'),                                        # li's that start with •,#,* etc.
+        ('(<li>)[1-9]+\\. *', '\\1'),                                         # li's that start with a number
         ('(<[^>]*class=\"[^>]*)(Bodycopyindented|rspkr_dr_added) *', '\\1'), # specific classes
         ('(<[^>]*)(class|id|style)=\" *\"','\\1'),                           # specific empty attributes
         (' dir="ltr" style="text-align: left;"',''),                         # Get rid of ATTO's default para style on blank pages
         ('<p><br></p>','<br>'),                                              # p's that only contain br
-        ('<br>\w?</p>','</p>'),                                              # br just before a closing p
-        ('<\!-- ?\[(if|end).*?-->',''),                                      # MSWord style comments
+        ('<br>\\w?</p>','</p>'),                                              # br just before a closing p
+        ('<\\!-- ?\\[(if|end).*?-->',''),                                      # MSWord style comments
         ('(<img[^>]+)\\?time=\\d{13,}','\\1'),                               # images with time stamps.  Prevents Moodle errors
         # ('(<img[^>]+)width="\d+\%?" height="\d+\%?" ','\\1'),              # remove image dimensions
-        ('http://127.0.0.1.*?\#','#'),                                       # remove localhost prefix
+        ('http://127.0.0.1.*?\\#','#'),                                       # remove localhost prefix
         (' atto_image_button_text-bottom',' w-100'),                         # remove img classes added by the ATTO editor
-        ('(?<=<td)(?<!>) width="\d+\%?"',''),                                # remove <td> widths
+        ('\\?*time\\d{8,}', ''),                                             # Remove Moodle timestamps from image src
+        ('(?<=<td)(?<!>) width="\\d+\\%?"',''),                                # remove <td> widths
         (' valign="top"',''),                                                # remove <td> valign="top"
         (' target="_blank"',''),                                             # Momentarily delete target="_blank"
+        ('<br>',''),                                                         # Momentarily delete target="_blank"
         ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
         ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
         '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
@@ -44,19 +46,20 @@ class CleanHtml(sublime_plugin.TextCommand):
         tags = [                                                             # ==================
         '<span style="font-size: 1rem;.*?\""',                               # spans with 1rem sizing (Moodle ATTO artefact)
         '<span lang="EN-US"',                                                # spans with lang
-        '<span style="color:',                                                # spans with lang
+        '<span style="color:',                                               # spans with lang
         '<section',                                                          # any section
         '<article',                                                          # any article
         '<div>',                                                             # div without attribuites
         '<li>\\W*<p',                                                        # li>p
         '<ul>\\W*<ul',                                                       # ul>ul
         '<ol>\\W*<ol',                                                       # ol>ol
-        '<((p|strong|em|li|h[1-6]|b|ol|ul))>\s*(?=</\\1>)',                  # specific empty tags
+        '<((p|strong|em|li|h[1-6]|b|ol|ul))>\\s*(?=</\\1>)',                  # specific empty tags
         '<p>(?=\\W*<(p|ul|ol|h[1-6]|li|div|br))',                            # p>p or p>ul or p>div etc.
         '<h[1-6]><(strong|b|i|em)',                                          # headings with bolded text etc
         '/mod/glossary/showentry.php',                                       # Remove Moodle glossary links
         '<a name="',                                                         # Remove MsWord internal anchors
-        '<(a|img) [^>]+readspeaker\.com'                                     # Remove Readspeaker links and icons
+        '<(a|img) [^>]+readspeaker\\.com'                                    # Remove Readspeaker links and icons
+        'style="cursor: nw-resize; margin: 0px; padding: 0px; left: 3px; top: 3px;">'                                           # TinyMCE resize handles
         ]
                                                                              # ADD BACK IN WHITESPACE
         linebreaks = [                                                       # ======================
@@ -70,7 +73,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         # =========================
                                                                              # DEEP SUBSTITUTIONS
         deepsubs = [                                                         # ==================
-        (' \[OPTIONAL\] ',' ')                                               # Remove all style attributes
+        (' \\[OPTIONAL\\] ',' ')                                               # Remove all style attributes
         # (' style=\".*?\"',''),                                               # Remove all style attributes
         # (' [^a][\w-]+=" *"(?=.*?>)','')                                      # Remove empty attributes that are not alt
         ]
