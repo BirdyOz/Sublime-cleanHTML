@@ -1,4 +1,61 @@
 import sublime, sublime_plugin, re, sys
+from bs4 import BeautifulSoup
+
+def normalize_external_links(string):
+    """Add safe target/rel attributes to external links without reparsing the full document."""
+    def normalize_anchor_open_tag(match):
+        open_tag = match.group(0)
+        soup = BeautifulSoup(open_tag + "</a>", "html.parser")
+        tag = soup.find("a")
+        if tag is None:
+            return open_tag
+
+        href = tag.get("href", "")
+        if tag.has_attr("target"):
+            del tag["target"]
+        if tag.has_attr("rel"):
+            del tag["rel"]
+        if re.match(r"^https?://", href, flags=re.IGNORECASE):
+            tag["target"] = "_blank"
+            tag["rel"] = ["noopener", "noreferrer"]
+
+        serialised = str(tag)
+        if serialised.endswith("</a>"):
+            return serialised[:-4]
+        return open_tag
+
+    return re.sub(r"<a\b[^>]*?>", normalize_anchor_open_tag, string, flags=re.IGNORECASE | re.DOTALL)
+
+def repair_nested_paragraph_wrappers(string):
+    """Unwrap invalid outer <p> tags that contain only nested block <p> tags."""
+    soup = BeautifulSoup(string, "html.parser")
+
+    changed = True
+    while changed:
+        changed = False
+        for p_tag in soup.find_all("p"):
+            child_tags = [child for child in p_tag.children if getattr(child, "name", None) is not None]
+            if not child_tags:
+                continue
+
+            only_nested_p = True
+            for child in p_tag.children:
+                name = getattr(child, "name", None)
+                if name is None:
+                    if str(child).strip():
+                        only_nested_p = False
+                        break
+                    continue
+                if name != "p":
+                    only_nested_p = False
+                    break
+
+            if only_nested_p:
+                p_tag.unwrap()
+                changed = True
+                break
+
+    return str(soup)
 
 class CleanHtml(sublime_plugin.TextCommand):
     # Type = normal - Remove spans, font-sizes, non-breaking spaces empty tags etc.
@@ -34,9 +91,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         ('\\?*time\\d{8,}', ''),                                             # Remove Moodle timestamps from image src
         ('(?<=<td)(?<!>) width="\\d+\\%?"',''),                                # remove <td> widths
         (' valign="top"',''),                                                # remove <td> valign="top"
-        (' target="_blank"',''),                                             # Momentarily delete target="_blank"
         ('<br>',''),                                                         # Momentarily delete target="_blank"
-        ('(<a[^>]*?href ?= ?"https?://.*?")','\\1 target="_blank"'),         # Now add it back in for all external hrefs
         ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
         '<a class="source-btn text-muted" data-toggle="collapse" href="#show'),
         ('▼ Show attribution', '▽ Show attribution'),
@@ -58,7 +113,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         '<h[1-6]><(strong|b|i|em)',                                          # headings with bolded text etc
         '/mod/glossary/showentry.php',                                       # Remove Moodle glossary links
         '<a name="',                                                         # Remove MsWord internal anchors
-        '<(a|img) [^>]+readspeaker\\.com'                                    # Remove Readspeaker links and icons
+        '<(a|img) [^>]+readspeaker\\.com',                                   # Remove Readspeaker links and icons
         'style="cursor: nw-resize; margin: 0px; padding: 0px; left: 3px; top: 3px;">'                                           # TinyMCE resize handles
         ]
                                                                              # ADD BACK IN WHITESPACE
@@ -151,6 +206,9 @@ def replacestrings(self, edit, type, substitutions, deepsubs, mpsubs, canvassubs
     for old, new in substitutions:
         strings_replaced += len(re.findall(old, string))
         string = re.sub(old, new, string)
+
+    string = repair_nested_paragraph_wrappers(string)
+    string = normalize_external_links(string)
 
     # For Canvas
     if type == "canvas":

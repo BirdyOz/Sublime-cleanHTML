@@ -1,61 +1,194 @@
+<audio controls="" src="audio.mp3"></audio>
+<div class="clearfix container-fluid"></div>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>CleanHTML Testbed</title>
+    <style>
+    body {
+        font-family: sans-serif;
+        line-height: 1.5;
+        margin: 2rem;
+    }
+
+    .test-case {
+        border-top: 2px solid #ccc;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+    }
+
+    .mode {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .expected {
+        background: #f6f6f6;
+        border: 1px solid #ddd;
+        padding: 1rem;
+        white-space: pre-wrap;
+    }
+    </style>
 </head>
 
 <body>
-    <h3>Using GhostScript to edit HTML</h3>
-    <p>Paragraph text. <strong>Lorem</strong> ipsum <a href="#">dolor sit amet</a>, <em>consectetur adipisicing</em> elit, sed do <strong><em>eiusmod tempor</em></strong> incididunt ut labore et dolore magna aliqua.</p>
-    <h4>Lists</h4>
-    <h5>Unordered list</h5>
-    <ul>
-        <li>Bullet</li> TODO <ul>
-            <li>Sub-bullet</li>
-            <li>Sub-bullet</li>
-        </ul>
-        <li>Bullet</li>
-    </ul>
-    <h5>Ordered list</h5> TODO <li>Numbered list</li>
-    <ol>
-        <li>Sub-list item</li>
-        <li>Sub-list item</li>
-    </ol>
-    <li>Numbered list</li>
-    <h4>Tables</h4>
-    <table>
-        <thead>
-            <tr>
-                <th scope="col">#</th>
-                <th scope="col">First</th>
-                <th scope="col">Last</th>
-                <th scope="col">Email</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th scope="row">1</th>
-                <td>Fred</td>
-                <td>Nurk</td>
-                <td><a href="mailto:fnurk@nowhere.com">fnurk@nowhere.com</a></td>
-            </tr>
-            <tr>
-                <th scope="row">2</th>
-                <td>Jane</td>
-                <td>Doe</td>
-                <td><a href="mailto:jdoe@nowhere.com">jdoe@nowhere.com</a></td>
-            </tr>
-            <tr>
-                <th scope="row">3</th>
-                <td>Incog</td>
-                <td>Ingognito</td>
-                <td><a href="mailto:incognito@nowhere.com">incognito@nowhere.com</a></td>
-            </tr>
-        </tbody>
-    </table>
+    <h1>CleanHTML Testbed</h1>
+    <p>This document is a manual testbed for <code>GB-clean-HTML.py</code>.</p>
+    <p>Run the cleaner on a working copy of this file. Compare each live input block against the nearby expected-output note.</p>
+    <div class="test-case" id="test-external-links">
+        <h2>Test 1: External links gain safe attributes</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <p><a href="https://example.com" rel="noopener noreferrer" target="_blank">External</a> and <a href="/internal">Internal</a></p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;&lt;a href="https://example.com" rel="noopener noreferrer" target="_blank"&gt;External&lt;/a&gt; and &lt;a href="/internal"&gt;Internal&lt;/a&gt;&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-nested-p">
+        <h2>Test 2: Nested paragraph wrappers are repaired</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <div class="card-body gb-bs-content">
+                <p>First paragraph.</p>
+                <p>Second paragraph.</p>
+            </div>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;div class="card-body gb-bs-content"&gt; &lt;p&gt;First paragraph.&lt;/p&gt; &lt;p&gt;Second paragraph.&lt;/p&gt; &lt;/div&gt;</div>
+    </div>
+    <div class="test-case" id="test-atto-cleanup">
+        <h2>Test 3: ATTO editor attributes are removed</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <p>Text</p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;Text&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-li-cleanup">
+        <h2>Test 4: Bullet markers are stripped from list items</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <ul>
+                <li>One</li>
+                <li>Two</li>
+                <li>Three</li>
+            </ul>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;ul&gt; &lt;li&gt;One&lt;/li&gt; &lt;li&gt;Two&lt;/li&gt; &lt;li&gt;Three&lt;/li&gt; &lt;/ul&gt;</div>
+    </div>
+    <div class="test-case" id="test-image-timestamp">
+        <h2>Test 5: Moodle image timestamps are removed</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <p>
+                <img src="example.png" /></p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;&lt;img src="example.png" /&gt;&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-attribution-helper">
+        <h2>Test 6: Attribution helper cleanup still applies</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input"> <a class="source-btn text-muted" data-toggle="collapse" href="#show-123">▽ Show attribution</a> </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;a class="source-btn text-muted" data-toggle="collapse" href="#show-123"&gt;▽ Show attribution&lt;/a&gt;</div>
+    </div>
+    <div class="test-case" id="test-empty-br">
+        <h2>Test 7: Empty paragraph wrappers around br are simplified</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input"> </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;br&gt;</div>
+    </div>
+    <div class="test-case" id="test-structural-wrappers">
+        <h2>Test 8: Empty structural wrappers are removed</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <div>
+                <p>Content</p>
+            </div>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;Content&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-deep">
+        <h2>Test 9: Deep mode applies deep substitutions</h2>
+        <p class="mode">Mode: deep</p>
+        <div class="test-input">
+            <p>Before [OPTIONAL] after</p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;Before after&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-canvas">
+        <h2>Test 10: Canvas mode removes comments and target attributes</h2>
+        <p class="mode">Mode: canvas</p>
+        <div class="test-input">
+            <!-- comment -->
+            <p><a href="https://example.com" rel="noopener noreferrer" target="_blank">External</a></p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;&lt;a href="https://example.com"&gt;External&lt;/a&gt;&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-mp-list">
+        <h2>Test 11: MP mode converts bullet paragraphs into ul/li markup</h2>
+        <p class="mode">Mode: mp</p>
+        <div class="test-input">
+            <p class="bulletlist">First</p>
+            <p class="standardbulletpoint">Second</p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;ul&gt;&lt;li&gt;First&lt;/li&gt;&lt;li&gt;Second&lt;/li&gt;&lt;/ul&gt;</div>
+    </div>
+    <div class="test-case" id="test-mp-image">
+        <h2>Test 12: MP mode unwraps p tags around standalone images</h2>
+        <p class="mode">Mode: mp</p>
+        <div class="test-input">
+            <p>
+                <img alt="Example" src="image.jpg" /></p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;img src="image.jpg" alt="Example"&gt;</div>
+    </div>
+    <div class="test-case" id="test-table">
+        <h2>Test 13: Table mode removes table tags after cleanup</h2>
+        <p class="mode">Mode: table</p>
+        <div class="test-input">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Cell</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">Cell</div>
+    </div>
+    <div class="test-case" id="test-audio">
+        <h2>Test 14: Audio block is moved to the top</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <p>Intro</p>
+            <p>After</p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;audio controls src="audio.mp3"&gt;&lt;/audio&gt;&lt;div class="clearfix container-fluid"&gt;&lt;/div&gt;&lt;p&gt;Intro&lt;/p&gt;&lt;p&gt;After&lt;/p&gt;</div>
+    </div>
+    <div class="test-case" id="test-readspeaker">
+        <h2>Test 15: ReadSpeaker links are removed</h2>
+        <p class="mode">Mode: normal</p>
+        <div class="test-input">
+            <p>Listen</p>
+        </div>
+        <p><strong>Expected output:</strong></p>
+        <div class="expected">&lt;p&gt;&lt;/p&gt;</div>
+    </div>
 </body>
 
 </html>
