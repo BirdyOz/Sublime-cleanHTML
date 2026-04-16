@@ -4,6 +4,28 @@
 
 Unlike `CleanMD`, this package assumes the document is HTML rather than mixed Markdown.
 
+## Settings
+
+`CleanHTML` includes a package settings file:
+
+- [`CleanHTML.sublime-settings`](/Users/gbird/Library/Application%20Support/Sublime%20Text/Packages/CleanHTML/CleanHTML.sublime-settings)
+
+The current settings control:
+
+- whether external links are normalised with safe `target` / `rel` attributes
+- whether invalid nested paragraph wrappers are repaired
+- whether embedded audio is hoisted to the top of the document
+- whether `htmlprettify` runs after cleanup
+- which matched elements are unwrapped with BeautifulSoup CSS selectors
+- which matched elements are removed entirely with BeautifulSoup CSS selectors
+
+Selector examples you can add over time include:
+
+- `div.delete-me`
+- `a[name]`
+- `li > p`
+- `div.legacy-wrapper > span`
+
 ## What CleanHTML does
 
 `CleanHTML` runs across the whole file and applies a sequence of substitutions, tag removals, and final HTML prettification.
@@ -17,9 +39,13 @@ Core cleanup includes:
 - cleaning up specific attribution helper markup
 - normalising external links so `http` and `https` links get `target="_blank"` and `rel="noopener noreferrer"`
 - repairing invalid nested paragraph wrappers such as `<p><p>...</p></p>`
+- applying a first-pass BeautifulSoup structural cleanup for selected wrapper and malformed tags
+- unwrapping or removing extra elements via settings-driven CSS selectors
 - moving embedded `<audio>` blocks to the top of the document when required by the existing workflow
 
-After substitutions, the package removes selected tags via Emmet and runs HTML prettification.
+After substitutions, the package performs structural tag cleanup and then runs HTML prettification.
+
+Each run also reports a short summary in the status bar and Sublime console, including the cleaning mode, number of substitutions, and number of tags removed.
 
 ## Cleaning Modes
 
@@ -48,6 +74,7 @@ The package provides multiple cleaning modes:
 Command palette entries currently provided:
 
 - `BirdyOz - Clean HTML (normal)`
+- `BirdyOz - Clean HTML (normal, no prettify)`
 - `BirdyOz - Clean HTML (Deep)`
 - `BirdyOz - Clean HTML (Canvas)`
 - `BirdyOz - Clean HTML (Table plus Deep)`
@@ -58,10 +85,9 @@ Command palette entries currently provided:
 
 This package relies on other Sublime Text packages for parts of the workflow:
 
-- [Emmet](https://packagecontrol.io/packages/Emmet) for tag removal
 - [HTML-CSS-JS Prettify](https://packagecontrol.io/packages/HTML-CSS-JS%20Prettify) for final HTML prettification
 
-It also uses BeautifulSoup internally for a few targeted HTML repairs and safer link handling.
+It also uses BeautifulSoup internally for targeted HTML repairs, safer link handling, and structural cleanup.
 
 ## Usage
 
@@ -70,6 +96,10 @@ It also uses BeautifulSoup internally for a few targeted HTML repairs and safer 
 3. Choose the cleaning mode that matches the content source.
 
 Because the command runs across the full document, it is best used on working copies or source files that are intended to be rewritten in-place.
+
+If you want to inspect the structural cleanup before final formatting, use:
+
+- `BirdyOz - Clean HTML (normal, no prettify)`
 
 ## Test Assets
 

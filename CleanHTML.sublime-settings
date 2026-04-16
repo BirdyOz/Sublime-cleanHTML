@@ -1,0 +1,18 @@
+{
+    "normalize_external_links": true,
+    "repair_nested_paragraph_wrappers": true,
+    "hoist_audio_to_top": false,
+    "run_htmlprettify_after_clean": true,
+    "unwrap_selectors": [
+        "section",
+        "article",
+        "a[name]",
+        "li > p",
+        "div:not([class]):not([id]):not([style])"
+    ],
+    "remove_selectors": [
+        "a[href*=\"readspeaker.com\"]",
+        "img[src*=\"readspeaker.com\"]",
+        "div.deleteme"
+    ]
+}

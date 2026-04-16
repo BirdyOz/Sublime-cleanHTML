@@ -8,6 +8,15 @@
         }
     },
     {
+        "caption": "BirdyOz - Clean HTML (normal, no prettify)",
+        "command": "clean_html",
+        "args":
+        {
+            "type": "normal",
+            "no_prettify": true
+        }
+    },
+    {
         "caption": "BirdyOz - Clean HTML (Deep)",
         "command": "clean_html",
         "args":
