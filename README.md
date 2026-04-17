@@ -4,6 +4,8 @@
 
 Unlike `CleanMD`, this package assumes the document is HTML rather than mixed Markdown.
 
+Use `CleanHTML` for full HTML documents. For mixed Markdown files with embedded HTML blocks, use `CleanMD`.
+
 ## Settings
 
 `CleanHTML` includes a package settings file:
@@ -14,7 +16,7 @@ The current settings control:
 
 - whether external links are normalised with safe `target` / `rel` attributes
 - whether invalid nested paragraph wrappers are repaired
-- whether embedded audio is hoisted to the top of the document
+- whether embedded audio is hoisted to the top of the document for legacy workflows
 - whether `htmlprettify` runs after cleanup
 - which matched elements are unwrapped with BeautifulSoup CSS selectors
 - which matched elements are removed entirely with BeautifulSoup CSS selectors

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 DEFAULT_CLEANHTML_CONFIG = {
     "normalize_external_links": True,
     "repair_nested_paragraph_wrappers": True,
-    "hoist_audio_to_top": True,
+    "hoist_audio_to_top": False,
     "run_htmlprettify_after_clean": True,
     "unwrap_selectors": [
         "section",
@@ -120,6 +120,11 @@ def repair_nested_paragraph_wrappers(string):
 
     return str(soup)
 
+def report_invalid_selector(kind, selector, exc):
+    message = f"CleanHTML: invalid {kind} selector '{selector}'"
+    print(f"{message}: {exc}")
+    sublime.status_message(message)
+
 def apply_selector_unwraps(soup, selectors):
     count = 0
     for selector in selectors:
@@ -128,7 +133,7 @@ def apply_selector_unwraps(soup, selectors):
         try:
             matches = list(soup.select(selector))
         except Exception as exc:
-            print("CleanHTML: invalid unwrap selector '{}': {}".format(selector, exc))
+            report_invalid_selector("unwrap", selector, exc)
             continue
         for tag in matches:
             if getattr(tag, "parent", None) is None:
@@ -147,7 +152,7 @@ def apply_selector_removals(soup, selectors):
         try:
             matches = list(soup.select(selector))
         except Exception as exc:
-            print("CleanHTML: invalid remove selector '{}': {}".format(selector, exc))
+            report_invalid_selector("remove", selector, exc)
             continue
         for tag in matches:
             if getattr(tag, "parent", None) is None:
@@ -209,7 +214,7 @@ class CleanHtml(sublime_plugin.TextCommand):
         no_prettify = bool(kwargs.get("no_prettify", False))
 
         if type not in VALID_CLEANHTML_TYPES:
-            message = "CleanHTML: unknown cleaning mode '{}'".format(type)
+            message = f"CleanHTML: unknown cleaning mode '{type}'"
             print(message)
             sublime.status_message(message)
             return
@@ -322,11 +327,10 @@ class CleanHtml(sublime_plugin.TextCommand):
             config=config,
         )
         tags_removed = cleanup_structure(self, edit, type, config=config)
-        summary = "CleanHTML ({mode}): {strings} substitutions, {tags} tags removed{suffix}".format(
-            mode=type,
-            strings=strings_replaced,
-            tags=tags_removed,
-            suffix="" if config.get("run_htmlprettify_after_clean", True) else ", prettify skipped",
+        summary = (
+            f"CleanHTML ({type}): {strings_replaced} substitutions, "
+            f"{tags_removed} tags removed"
+            f"{'' if config.get('run_htmlprettify_after_clean', True) else ', prettify skipped'}"
         )
         print(summary)
         self.view.set_status("CleanHTML summary", summary)
