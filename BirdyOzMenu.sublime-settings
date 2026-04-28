@@ -1,0 +1,15 @@
+{
+    "menus": {
+        "clean_html": {
+            "title": "CleanHTML",
+            "package": "CleanHTML",
+            "commands": "GB-clean-HTML.sublime-commands",
+            "keymap": "Default (OSX).sublime-keymap",
+            "readme": "README.md",
+            "caption_prefixes": ["BirdyOz - "],
+            "skip_commands": ["birdyoz_menu", "birdyoz_menu_view_readme"],
+            "status_prefix": "CleanHTML",
+            "css_class": "clean-html-menu"
+        }
+    }
+}
