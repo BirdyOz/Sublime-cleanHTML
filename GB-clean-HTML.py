@@ -249,6 +249,8 @@ class CleanHtml(sublime_plugin.TextCommand):
         (' atto_image_button_text-bottom',' w-100'),                         # remove img classes added by the ATTO editor
         ('\\?*time\\d{8,}', ''),                                             # Remove Moodle timestamps from image src
         ('(?<=<td)(?<!>) width="\\d+\\%?"',''),                                # remove <td> widths
+        (r'<br\b(?=[^>]*\bdata-mce-bogus=["\']1["\'])[^>]*?/?>',''),     # Bogus breaks added by ATTO/TinyMCE editors
+        (r'<harper-render-box\b[^>]*(?:/>|>.*?</harper-render-box>)',''), # Harper editor overlay
         (' valign="top"',''),                                                # remove <td> valign="top"
         ('<br>',''),                                                         # Momentarily delete target="_blank"
         ('<a class="source-btn" data-toggle="collapse" href="#show',         # Specific cleanup of attribution helpers
