@@ -3,6 +3,15 @@
     "repair_nested_paragraph_wrappers": true,
     "hoist_audio_to_top": false,
     "run_htmlprettify_after_clean": true,
+    "remove_attributes": [
+        "data-mce-*"
+    ],
+    "preserve_nbsp_placeholders": true,
+    "protect_empty_selectors": [
+        "div",
+        "span",
+        "i"
+    ],
     "unwrap_selectors": [
         "section",
         "article",

@@ -1,0 +1,28 @@
+version = 1
+project = "CleanHTML"
+sublime_verification = [
+    "Run affected modes on a working copy of testbed.html inside Sublime and compare with testplan.md.",
+    "Use normal no-prettify mode to isolate structural cleanup before checking HTMLPrettify integration.",
+]
+
+[[smoke]]
+name = "structural regressions"
+working_directory = "."
+command = ["{python}", "-m", "unittest", "-v", "tests/test_clean_html.py"]
+required_modules = ["bs4", "soupsieve"]
+required_tools = []
+coverage = "stubbed"
+missing = "fail"
+
+[[smoke]]
+name = "syntax"
+files = [
+    "GB-clean-HTML.py",
+    "tests/__init__.py",
+    "tests/clean_html_cases.py",
+    "tests/test_clean_html.py",
+]
+required_modules = []
+required_tools = []
+coverage = "compile"
+missing = "fail"

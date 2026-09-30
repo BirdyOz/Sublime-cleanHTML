@@ -8,7 +8,10 @@ Each case includes:
 - `INPUT`: sample source HTML
 - `EXPECTED`: the intended result after running `CleanHTML`
 
-These examples are designed as a review checklist rather than an executable test harness.
+These examples remain the manual review checklist for complete command modes
+and HTMLPrettify integration. The headless-safe subset is executable from the
+project-owned `tests/clean_html_cases.py` and `tests/test_clean_html.py` files;
+do not duplicate those cases inside PyBuild or a virtual environment.
 
 ## Test 1: External links gain safe attributes
 
@@ -252,3 +255,57 @@ INPUT:
 EXPECTED:
 <p></p>
 -->
+
+## Test 16: TinyMCE attributes are removed in all modes
+
+MODE: each of `normal`, `deep`, `canvas`, `table`, `mp`, `mpextended`;
+use no-prettify first, then normal with HTMLPrettify.
+
+INPUT:
+
+```html
+<p data-mce-style="text-align: left;" data-purpose="layout">Text</p>
+<img src="real.jpg" data-mce-src='draft.jpg' alt="Image">
+```
+
+EXPECTED: `data-mce-style` and `data-mce-src` disappear; `data-purpose`,
+`src="real.jpg"`, `alt`, and text remain. Add an exact name and another `*`
+pattern to `remove_attributes` and confirm they match only attribute names.
+With `remove_attributes: []`, both TinyMCE attributes remain, including Canvas.
+
+## Test 17: Empty TinyMCE placeholders survive
+
+MODE: all modes, then normal with HTMLPrettify. Saved defaults protect `div`,
+`span`, and `i`.
+
+INPUT:
+
+```html
+<div></div><span class="icon"></span><i aria-hidden="true"></i>
+<strong class="icon">&nbsp;</strong><p>&nbsp;</p><p>Word&nbsp;word</p>
+```
+
+EXPECTED: the empty `div`, `span`, and `i` remain and contain NBSP; the existing
+`strong` NBSP remains. The blank paragraph is removed, and ordinary prose
+becomes `Word word`. NBSP may serialize as Unicode U+00A0. Run twice and confirm
+that a second cleanup does not add more NBSPs. Nonempty elements and void
+`img` elements must not be padded. Explicit `remove_selectors` still win.
+
+Narrow `protect_empty_selectors` to a class selector and confirm only matching
+empty elements are padded. Set it to `[]` and disable
+`preserve_nbsp_placeholders` to check the legacy cleanup behavior. Restore the
+settings after testing. Finally paste into Moodle TinyMCE, save, reopen, and
+inspect learner-facing HTML for preserved elements/classes/ARIA attributes;
+record the Moodle/editor version used for this roundtrip.
+
+### Verification — 2026-09-30
+
+PyBuild passed 24 headless regressions and all declared syntax checks. Native
+Sublime commands passed a focused TinyMCE fixture in all six modes without
+prettify: editor attributes were removed, real image `src` was retained,
+empty `div`/`span`/`i` received NBSP, an existing attributed `strong` NBSP was
+retained, and the blank paragraph was removed. A custom protection selector
+also passed against Sublime's embedded BeautifulSoup. Normal mode with
+HTMLPrettify passed on a scratch copy of `testbed.html` plus that fixture.
+This does not certify the complete manual plan or a Moodle TinyMCE save/reopen
+roundtrip; those broader checks remain separate.

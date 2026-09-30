@@ -22,10 +22,13 @@ Read only for orientation during priming; do not edit or run the cleaner:
 2. `CleanHTML.sublime-settings` for the current configurable defaults.
 3. `GB-clean-HTML.py` for implementation details relevant to the next task.
 4. `GB-clean-HTML.sublime-commands`, `Default (OSX).sublime-keymap`, and `BirdyOzMenu.sublime-settings` for the exposed Sublime command, keyboard, and shared-menu surfaces.
-5. `testplan.md` for expected manual regression cases. Inspect `testbed.html` only when a task needs the runnable fixture or its current state.
+5. `tests/`, `testplan.md`, and `testbed.html` when behavior or verification is
+   in scope. The executable headless-safe cases are under `tests/`; the manual
+   plan and mutable testbed cover the full in-editor workflow.
 6. The central working profile at `/Users/gbird/Dropbox/github/codex-common-core/profiles/working-with-me-profile.md`.
 
-There is currently no project `docs/` directory or automated test harness. Do not infer either one.
+There is currently no project `docs/` directory. Do not infer one. The
+project-owned automated harness lives visibly under `tests/`.
 
 ## Local Authority
 
@@ -61,6 +64,35 @@ Keep CleanHTML's exact regexes, selectors, modes, settings, commands, fixtures, 
 - Match verification to the affected modes and include both transformed content and content that must remain untouched when broadening cleanup rules.
 - Test plan case 14 requires `hoist_audio_to_top` to be enabled; it is not the current saved default. State that setup when using the case.
 - A Python compile check can catch syntax errors but cannot replace loading the package and exercising it inside Sublime Text. Report any in-editor check that could not be run.
+
+## Shared PyBuild Contract
+
+- This repository owns `pybuild-smokes.toml`; PyBuild at
+  `/Users/gbird/Dropbox/github/pybuild` indexes it and runs both the narrowly
+  stubbed structural suite and non-importing syntax checks through the shared
+  locked interpreter.
+- `tests/clean_html_cases.py` owns the headless-safe executable case data and
+  `tests/test_clean_html.py` owns the narrowly stubbed runner. The suite covers
+  pure link, paragraph, selector, heading, empty-tag, and table transformations;
+  `testplan.md` remains authoritative for the complete in-Sublime mode workflow.
+- Update the local manifest when compile targets or future headless tests
+  change; keep exact commands and fixtures in this repository.
+
+## Current Verification Record
+
+Reviewed 2026-09-24 against the current working tree. The project-owned gate
+passed with the locked workbench interpreter:
+
+- 15 narrowly stubbed structural/link regressions passed.
+- Syntax compilation passed for `GB-clean-HTML.py` and all three test sources.
+- PyBuild reported no skipped or informational smoke suites.
+
+This does not verify Sublime package loading, the embedded BeautifulSoup
+dependency, command-palette/keybinding/menu entry points, HTMLPrettify output,
+or the complete `normal`, `deep`, `canvas`, `table`, `mp`, and `mpextended`
+workflows. Those remain an in-Sublime check on a working copy of `testbed.html`.
+Case 14 in `testplan.md` also requires a temporary `hoist_audio_to_top: true`
+override because the saved default remains `false`.
 
 ## Expected Priming Confirmation
 

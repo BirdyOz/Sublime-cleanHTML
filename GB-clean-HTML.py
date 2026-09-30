@@ -2,13 +2,16 @@ import re
 
 import sublime
 import sublime_plugin
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 
 DEFAULT_CLEANHTML_CONFIG = {
     "normalize_external_links": True,
     "repair_nested_paragraph_wrappers": True,
     "hoist_audio_to_top": False,
     "run_htmlprettify_after_clean": True,
+    "remove_attributes": ["data-mce-*"],
+    "preserve_nbsp_placeholders": True,
+    "protect_empty_selectors": ["div", "span", "i"],
     "unwrap_selectors": [
         "section",
         "article",
@@ -36,6 +39,8 @@ def get_cleanhtml_config(overrides=None):
         "remove_selectors",
         DEFAULT_CLEANHTML_CONFIG["remove_selectors"],
     )
+    remove_attributes = settings.get("remove_attributes", DEFAULT_CLEANHTML_CONFIG["remove_attributes"])
+    protect_empty_selectors = settings.get("protect_empty_selectors", DEFAULT_CLEANHTML_CONFIG["protect_empty_selectors"])
     config = {
         "normalize_external_links": settings.get(
             "normalize_external_links",
@@ -55,6 +60,9 @@ def get_cleanhtml_config(overrides=None):
         ),
         "unwrap_selectors": list(unwrap_selectors) if isinstance(unwrap_selectors, list) else list(DEFAULT_CLEANHTML_CONFIG["unwrap_selectors"]),
         "remove_selectors": list(remove_selectors) if isinstance(remove_selectors, list) else list(DEFAULT_CLEANHTML_CONFIG["remove_selectors"]),
+        "remove_attributes": list(remove_attributes) if isinstance(remove_attributes, list) else list(DEFAULT_CLEANHTML_CONFIG["remove_attributes"]),
+        "preserve_nbsp_placeholders": settings.get("preserve_nbsp_placeholders", True),
+        "protect_empty_selectors": list(protect_empty_selectors) if isinstance(protect_empty_selectors, list) else list(DEFAULT_CLEANHTML_CONFIG["protect_empty_selectors"]),
     }
 
     if isinstance(overrides, dict):
@@ -125,7 +133,7 @@ def report_invalid_selector(kind, selector, exc):
     print(f"{message}: {exc}")
     sublime.status_message(message)
 
-def apply_selector_unwraps(soup, selectors):
+def apply_selector_unwraps(soup, selectors, protected=()):
     count = 0
     for selector in selectors:
         if not isinstance(selector, str) or not selector.strip():
@@ -136,6 +144,8 @@ def apply_selector_unwraps(soup, selectors):
             report_invalid_selector("unwrap", selector, exc)
             continue
         for tag in matches:
+            if id(tag) in protected:
+                continue
             if getattr(tag, "parent", None) is None:
                 continue
             if selector == "div:not([class]):not([id]):not([style])" and getattr(tag, "attrs", None):
@@ -161,10 +171,23 @@ def apply_selector_removals(soup, selectors):
             count += 1
     return count
 
-def unwrap_inline_heading_wrappers(soup):
+def remove_configured_attributes(soup, patterns):
+    """Match whole attribute names, case-insensitively; only * is a wildcard."""
+    matchers = [
+        re.compile("^" + re.escape(pattern.strip()).replace(r"\*", ".*") + "$", re.IGNORECASE)
+        for pattern in patterns if isinstance(pattern, str) and pattern.strip()
+    ]
+    for tag in soup.find_all(True):
+        for name in list(tag.attrs):
+            if any(matcher.match(name) for matcher in matchers):
+                del tag.attrs[name]
+
+def unwrap_inline_heading_wrappers(soup, protected=()):
     count = 0
     for heading in soup.find_all(re.compile(r"^h[1-6]$")):
         for child in heading.find_all(["strong", "b", "em", "i"]):
+            if id(child) in protected:
+                continue
             if child.has_attr("aria-hidden") and str(child.get("aria-hidden")).lower() == "true":
                 continue
             if child.name == "i":
@@ -173,10 +196,12 @@ def unwrap_inline_heading_wrappers(soup):
             count += 1
     return count
 
-def remove_empty_known_tags(soup):
+def remove_empty_known_tags(soup, protected=()):
     count = 0
     empty_tag_names = ["p", "strong", "em", "li", "b", "ol", "ul", "h1", "h2", "h3", "h4", "h5", "h6"]
     for tag in soup.find_all(empty_tag_names):
+        if id(tag) in protected:
+            continue
         if not tag.get_text(strip=True) and not tag.find(True):
             tag.decompose()
             count += 1
@@ -189,15 +214,47 @@ def unwrap_table_tags(soup):
         count += 1
     return count
 
+def prepare_nbsp_placeholders(soup, config):
+    """Keep intentional empty placeholders while normalising ordinary NBSP text."""
+    protected = set()
+    if config.get("preserve_nbsp_placeholders", True):
+        for tag in soup.find_all(True):
+            if tag.attrs and not tag.find(True) and not tag.get_text(strip=True) and "\xa0" in tag.get_text():
+                protected.add(id(tag))
+
+    for selector in config.get("protect_empty_selectors", []):
+        if not isinstance(selector, str) or not selector.strip():
+            continue
+        try:
+            matches = soup.select(selector)
+        except Exception as exc:
+            report_invalid_selector("protect empty", selector, exc)
+            continue
+        for tag in matches:
+            if not tag.is_empty_element and tag.name not in ("script", "style", "textarea", "title") and not tag.find(True) and not tag.get_text(strip=True):
+                if "\xa0" not in tag.get_text():
+                    tag.append("\xa0")
+                protected.add(id(tag))
+
+    for node in list(soup.find_all(string=True)):
+        if not isinstance(node, Comment) and "\xa0" in node and id(node.parent) not in protected:
+            node.replace_with(str(node).replace("\xa0", " "))
+    return protected
+
 def clean_html_structure(string, mode, config):
     """Apply tree-based structural cleanup and return text plus removal count."""
     soup = BeautifulSoup(string, "html.parser")
     tags_removed = 0
+    protected = prepare_nbsp_placeholders(soup, config)
 
-    tags_removed += apply_selector_unwraps(soup, config.get("unwrap_selectors", []))
+    tags_removed += apply_selector_unwraps(soup, config.get("unwrap_selectors", []), protected)
     tags_removed += apply_selector_removals(soup, config.get("remove_selectors", []))
-    tags_removed += unwrap_inline_heading_wrappers(soup)
-    tags_removed += remove_empty_known_tags(soup)
+    remove_configured_attributes(soup, config.get("remove_attributes", DEFAULT_CLEANHTML_CONFIG["remove_attributes"]))
+    tags_removed += unwrap_inline_heading_wrappers(soup, protected)
+    tags_removed += remove_empty_known_tags(soup, protected)
+
+    if mode == "mp":
+        tags_removed += apply_selector_unwraps(soup, ["span"], protected)
 
     if mode == "table":
         tags_removed += unwrap_table_tags(soup)
@@ -230,7 +287,6 @@ class CleanHtml(sublime_plugin.TextCommand):
 
                                                                              # NORMAL SUBSTITUTIONS
         substitutions = [                                                    # ====================
-        ('&nbsp;', ' '),                                                     # Non breaking spaces
         (' style *= *\"font-size: 1rem;.*?\"', ''),                          # font-sizes
         (' id *= *\"yui.*?\"', ''),                                          # yui id's
         (' dir=\"ltr\"', ''),                                                # redundant LTR declarations
@@ -276,19 +332,15 @@ class CleanHtml(sublime_plugin.TextCommand):
         ]
                                                                              # CANVASLMS SUBSTITUTIONS
         canvassubs = [                                                       # ==================
-        ('data-mce-.*?".*?" ?', ''),                                         # Canvas MCE editor
         (' target="_blank"',''),                                             # Delete all target="_blank"
         ('<!--.*?-->',''),                                                   # Delete all comments
         ('<br>',''),                                                         # Delete <br>
-        (' data-mce-style=".*?"',''),                                        # Delete data attributes
         ('9864','9948'),('9865','9949'),('9866','9947'),('9867','9946'),('9868','9945'),('9869','9944'),('9870','9943'),('9871','9942'),('9872','9941'),('9873','9940')
         ]
                                                                              # MELB POLY SUBSTITUTIONS
         mpsubs = [                                                           # ==================
         ('<p class="(bulletlist|standardbulletpoint)".*?>(.*?)</p>','<li>\\2</li>'), # Convert p bullets into li
         ('(( <li>.*?</li>)+)','<ul>\\1</ul>'),                               # Wrap converted list groups in ul
-        ('<span.*?>',''),                                                    # All open spans
-        ('</span.*?>',''),                                                   # All closed spans
         ('<p[^>]*>\n*(<img.*?>)</p>', '\\1'),                                # Remove p tags around images (to avoid confusion with other paras)
 
 

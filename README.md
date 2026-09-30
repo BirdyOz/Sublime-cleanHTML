@@ -20,6 +20,40 @@ The current settings control:
 - whether `htmlprettify` runs after cleanup
 - which matched elements are unwrapped with BeautifulSoup CSS selectors
 - which matched elements are removed entirely with BeautifulSoup CSS selectors
+- which attributes are removed by exact name or `*` wildcard
+- which empty elements receive a non-breaking space for TinyMCE preservation
+
+TinyMCE defaults in `CleanHTML.sublime-settings`:
+
+```json
+"remove_attributes": ["data-mce-*"],
+"preserve_nbsp_placeholders": true,
+"protect_empty_selectors": ["div", "span", "i"]
+```
+
+Add exact attribute names or wildcard patterns to `remove_attributes`, for
+example `["data-mce-*", "data-editor-*", "contenteditable"]`. Matching uses
+the complete attribute name, is case-insensitive, and treats only `*` as a
+wildcard. Values, real `src`/`style` attributes, and unrelated `data-*`
+attributes are preserved unless explicitly listed. Set the list to `[]` to
+disable this removal in every mode. Selector cleanup runs before attribute
+removal, so selectors can still match the original attributes.
+
+Empty `div`, `span`, and `i` elements gain a non-breaking space and survive
+structural unwrapping, including MP mode's span cleanup. Extend or narrow
+`protect_empty_selectors` with CSS selectors such as `span.component__icon`.
+Only whitespace-only elements with no child elements are padded; void tags
+such as `img` are never padded. Existing NBSP placeholders in otherwise-empty
+attributed elements are also retained when `preserve_nbsp_placeholders` is
+true. Ordinary NBSP text becomes regular spaces, and blank paragraphs still
+clean up. BeautifulSoup may emit the actual Unicode NBSP character rather
+than the spelling `&nbsp;`; these are equivalent HTML content.
+
+Explicit removal selectors and table-mode table unwrapping still take
+precedence. To restore the previous placeholder cleanup, use
+`"protect_empty_selectors": []` and `"preserve_nbsp_placeholders": false`.
+Confirm preservation after saving through your Moodle TinyMCE editor as well
+as in Sublime; editor configuration can affect the roundtrip.
 
 Selector examples you can add over time include:
 
@@ -34,7 +68,7 @@ Selector examples you can add over time include:
 
 Core cleanup includes:
 
-- removing common editor artefacts such as `&nbsp;`, YUI ids, redundant `dir="ltr"`, and some default inline styles
+- normalising ordinary `&nbsp;` text and removing common editor artefacts such as `data-mce-*`, YUI ids, redundant `dir="ltr"`, and some default inline styles
 - removing or simplifying unnecessary wrapper tags such as `span`, `section`, `article`, empty `div`, and several empty inline/block tags
 - stripping bullet-like prefixes from `<li>` content
 - removing Moodle image timestamp suffixes
@@ -110,7 +144,35 @@ The package includes:
 - [`testbed.html`](/Users/gbird/Library/Application%20Support/Sublime%20Text/Packages/CleanHTML/testbed.html)
 - [`testplan.md`](/Users/gbird/Library/Application%20Support/Sublime%20Text/Packages/CleanHTML/testplan.md)
 
-These are intended as manual regression aids rather than an automated test harness.
+These remain the manual, in-Sublime regression aids for full command modes and
+HTMLPrettify integration.
+
+The project-owned headless-safe suite is visible under `tests/`:
+
+- `tests/clean_html_cases.py` contains the executable link and structural cases.
+- `tests/test_clean_html.py` supplies narrow Sublime API stubs and runs 24
+  regressions, including the TinyMCE command pipeline in all six modes.
+
+Run it from the project root with:
+
+```zsh
+/Users/gbird/.venvs/workbench/bin/python -m unittest -v tests/test_clean_html.py
+```
+
+Or open `tests/test_clean_html.py` in Sublime and choose **Build With →
+PyBuild**. Run the complete project gate, including syntax compilation, with:
+
+```zsh
+/Users/gbird/.venvs/workbench/bin/python \
+  /Users/gbird/Dropbox/github/pybuild/scripts/run_plugin_smokes.py \
+  --project CleanHTML
+```
+
+As of 2026-09-24, that gate passes all 15 headless regressions and the
+declared syntax checks. It does not replace the required in-Sublime check for
+package loading, command/menu/keybinding behaviour, HTMLPrettify integration,
+or complete mode coverage; use a working copy of `testbed.html` and
+`testplan.md` for those checks.
 
 ## Keyboard Shortcuts
 
