@@ -19,7 +19,7 @@ treat it as an instruction to:
 Read only for orientation during priming; do not edit or run the cleaner:
 
 1. `README.md` for scope, supported modes, commands, and package dependencies.
-2. `CleanHTML.sublime-settings` for the current configurable defaults.
+2. `CleanHTML.sublime-settings` for active cleanup policy and `settings-reference.md` for the rule schema. Retired transformations are archived in `legacy-mp-transformations.md`.
 3. `GB-clean-HTML.py` for implementation details relevant to the next task.
 4. `GB-clean-HTML.sublime-commands`, `Default (OSX).sublime-keymap`, and `BirdyOzMenu.sublime-settings` for the exposed Sublime command, keyboard, and shared-menu surfaces.
 5. `tests/`, `testplan.md`, and `testbed.html` when behavior or verification is
@@ -33,7 +33,7 @@ project-owned automated harness lives visibly under `tests/`.
 ## Local Authority
 
 - This repository is authoritative for CleanHTML's current paths, settings, commands, fixtures, implementation, and supported workflow. Project-local facts override central and domain defaults.
-- Within the repository, `GB-clean-HTML.py` defines implemented transformations and modes; `CleanHTML.sublime-settings` defines the saved runtime defaults; the command, keymap, and menu files define the exposed Sublime UI.
+- Within the repository, `GB-clean-HTML.py` defines validation and generic transformation handlers; `CleanHTML.sublime-settings` is the single source of truth for active policy, modes, replacements and deletions; the command, keymap, and menu files define the exposed Sublime UI.
 - `README.md` is the user-facing description of supported behaviour. `testplan.md` records intended manual regression outcomes, and `testbed.html` is a mutable working fixture rather than independent specification.
 - If implementation, settings, README, and test expectations disagree, do not silently choose one as intended behaviour. Report the discrepancy and verify in Sublime Text or ask Greg which contract should change.
 - Preserve unrelated dirty work. Priming is read-only, and later tasks must not discard user edits in `GB-clean-HTML.py`, `testbed.html`, or any other file.
@@ -51,7 +51,7 @@ Keep CleanHTML's exact regexes, selectors, modes, settings, commands, fixtures, 
 ## Project Defaults
 
 - CleanHTML is a Sublime Text command for rewriting whole strict-HTML documents, especially editor-generated Moodle content. Use CleanMD, not this package, for mixed Markdown with embedded HTML.
-- Supported modes are `normal`, `deep`, `canvas`, `table`, `mp`, and `mpextended`; `normal` is the command's implementation default.
+- Supported modes are `normal`, `deep`, `canvas`, and `table`; the first configured mode (`normal`) is the default. MP modes are retired and documented in `legacy-mp-transformations.md`.
 - Current saved settings enable external-link normalization, nested-paragraph repair, and HTMLPrettify after cleanup. Audio hoisting is disabled. Settings-driven unwrap and removal selectors are part of runtime behaviour.
 - The `normal, no prettify` command is the preferred way to inspect structural cleanup before formatting.
 - The cleaner operates across the whole document. Use a working copy for tests and preserve the existing command palette, shared BirdyOz menu, and keyboard-first workflow unless a task explicitly changes them.
@@ -62,7 +62,7 @@ Keep CleanHTML's exact regexes, selectors, modes, settings, commands, fixtures, 
 - Treat in-editor execution in Sublime Text as authoritative. Run the relevant command mode on a working copy of `testbed.html` and compare it with `testplan.md`.
 - Use `BirdyOz - Clean HTML (normal, no prettify)` to isolate CleanHTML structural output from HTMLPrettify output.
 - Match verification to the affected modes and include both transformed content and content that must remain untouched when broadening cleanup rules.
-- Test plan case 14 requires `hoist_audio_to_top` to be enabled; it is not the current saved default. State that setup when using the case.
+- Audio verification requires enabling the `audio-hoisting` rule temporarily; its saved `enabled` value is `false`. State that setup when using the case.
 - A Python compile check can catch syntax errors but cannot replace loading the package and exercising it inside Sublime Text. Report any in-editor check that could not be run.
 
 ## Shared PyBuild Contract
@@ -80,19 +80,22 @@ Keep CleanHTML's exact regexes, selectors, modes, settings, commands, fixtures, 
 
 ## Current Verification Record
 
-Reviewed 2026-09-24 against the current working tree. The project-owned gate
-passed with the locked workbench interpreter:
+Reviewed 2026-09-30 after the settings-driven refactor:
 
-- 15 narrowly stubbed structural/link regressions passed.
-- Syntax compilation passed for `GB-clean-HTML.py` and all three test sources.
-- PyBuild reported no skipped or informational smoke suites.
+- 15 headless test methods pass, including 69 shared cleanup/preservation fixtures, grouped-settings validation and repeated-run checks.
+- Prior to the subsequent paragraph/comment and grouping updates, native Sublime execution passed 66 checks: all shared fixtures, invalid-settings atomicity, repeated cleanup of the working testbed in all four modes, and table cleanup followed by HTMLPrettify.
+- Native table verification confirms plain-text `th` becomes `h3`, formatted cell HTML survives, empty placeholders survive, and PRE whitespace survives.
 
-This does not verify Sublime package loading, the embedded BeautifulSoup
-dependency, command-palette/keybinding/menu entry points, HTMLPrettify output,
-or the complete `normal`, `deep`, `canvas`, `table`, `mp`, and `mpextended`
-workflows. Those remain an in-Sublime check on a working copy of `testbed.html`.
-Case 14 in `testplan.md` also requires a temporary `hoist_audio_to_top: true`
-override because the saved default remains `false`.
+The grouped settings use explicit group order and ordered entry lists because
+Sublime alphabetizes object keys. Group expansion was checked against the prior
+flat policy: effective order and values are identical. A native rerun of the
+latest grouping was interrupted by active editor interaction and remains pending.
+
+The shared PyBuild gate owns the headless suite and declared syntax checks.
+These checks do not certify a Moodle TinyMCE save/reopen roundtrip, every
+keyboard/menu entry point, or undo behavior. Follow `testplan.md` for those
+manual checks. Optional audio tests enable the disabled `audio-hoisting` rule
+without changing the saved default.
 
 ## Expected Priming Confirmation
 

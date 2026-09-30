@@ -1,311 +1,99 @@
-# CleanHTML Test Plan
+# CleanHTML manual regression plan
 
-This file records representative manual regression cases for `GB-clean-HTML.py`.
+Use scratch copies of `testbed.html` and pristine inputs from
+`tests/clean_html_cases.py`. Never overwrite the working fixture merely to test.
+Run **BirdyOz - Clean HTML (normal, no prettify)** first to isolate structural
+cleanup; then check the final formatting path. Settings policy and rule fields
+are documented in `settings-reference.md`.
 
-Each case includes:
+## Content preservation
 
-- `MODE`: the command mode to run (`normal`, `deep`, `table`, `canvas`, `mp`, or `mpextended`)
-- `INPUT`: sample source HTML
-- `EXPECTED`: the intended result after running `CleanHTML`
+1. Run normal on `<div></div><span></span><i class="icon"></i>`.
+   All three survive with `&nbsp;`. Repeat cleanup: no additional padding.
+   Existing attributed NBSP placeholders and named anchors also survive.
+2. Remove `data-mce-style`, `data-mce-src` and other `data-mce-*` attributes;
+   retain ordinary `style`, `src`, `alt`, other data attributes and inner HTML.
+   Add an attribute wildcard to the settings rule and confirm its exact scope.
+3. Keep unrelated CSS declarations, class tokens and URL query terms. Remove
+   configured declarations/tokens only. Image timestamp cleanup must retain
+   other query parameters and fragments; timestamps in prose remain unchanged.
+4. Preserve PRE indentation, code, scripts, styles and textarea text, including
+   optional markers and NBSP. Confirm normal cleanup does not join document lines.
+5. Preserve multiple paragraphs inside list items, styled paragraph wrappers,
+   negative numbers and ordinary zeros. Remove configured leading list markers.
+6. Preserve meaningful BRs and text immediately after a BR. Remove only the
+   configured bogus/trailing BRs and whole paragraphs containing only BRs.
+   Unwrap image-only paragraphs, retaining image attributes; keep paragraphs
+   that mix images with text. Explicit removal selectors win over unwrap.
+7. Preserve existing external rel tokens while adding configured link protection.
+   Internal target/rel removal follows its settings rule. Named anchors survive.
 
-These examples remain the manual review checklist for complete command modes
-and HTMLPrettify integration. The headless-safe subset is executable from the
-project-owned `tests/clean_html_cases.py` and `tests/test_clean_html.py` files;
-do not duplicate those cases inside PyBuild or a virtual environment.
+## Table mode
 
-## Test 1: External links gain safe attributes
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<p><a href="https://example.com">External</a> and <a href="/internal">Internal</a></p>
-```
-
-<!--
-EXPECTED:
-<p><a href="https://example.com" rel="noopener noreferrer" target="_blank">External</a> and <a href="/internal">Internal</a></p>
--->
-
-## Test 2: Nested paragraph wrappers are repaired
-
-MODE: `normal`
-
-INPUT:
+Run table mode on:
 
 ```html
-<div class="card-body gb-bs-content">
-    <p>
-        <p>First paragraph.</p>
-        <p>Second paragraph.</p>
-    </p>
-</div>
+<table>
+  <caption><em>Caption</em></caption>
+  <thead><tr><th>Plain heading</th><th><strong>Formatted heading</strong></th></tr></thead>
+  <tbody><tr><td><p>First</p></td><td><em>Second</em></td></tr></tbody>
+  <tfoot><tr><td>Footer</td></tr></tfoot>
+</table>
 ```
 
-<!--
-EXPECTED:
-<div class="card-body gb-bs-content">
-    <p>First paragraph.</p>
-    <p>Second paragraph.</p>
-</div>
--->
-
-## Test 3: Empty and redundant editor attributes are removed
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<p dir="ltr" style="text-align: left;" id="yui_123">Text</p>
-```
-
-<!--
-EXPECTED:
-<p>Text</p>
--->
-
-## Test 4: Bullet markers are stripped from li text
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<ul>
-    <li>• One</li>
-    <li># Two</li>
-    <li>3. Three</li>
-</ul>
-```
-
-<!--
-EXPECTED:
-<ul>
-    <li>One</li>
-    <li>Two</li>
-    <li>Three</li>
-</ul>
--->
-
-## Test 5: Moodle image timestamps are removed
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<p><img src="example.png?time1712345678" /></p>
-```
-
-<!--
-EXPECTED:
-<p><img src="example.png" /></p>
--->
-
-## Test 6: Specific attribution helper cleanup still applies
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<a class="source-btn" data-toggle="collapse" href="#show-123">▼ Show attribution</a>
-```
-
-<!--
-EXPECTED:
-<a class="source-btn text-muted" data-toggle="collapse" href="#show-123">▽ Show attribution</a>
--->
-
-## Test 7: Empty paragraph wrappers around br are simplified
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<p><br></p>
-```
-
-<!--
-EXPECTED:
-<br>
--->
-
-## Test 8: Empty structural wrappers are removed by tag cleanup
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<section><article><div><p>Content</p></div></article></section>
-```
-
-<!--
-EXPECTED:
-<p>Content</p>
--->
-
-## Test 9: Deep mode applies deep substitutions in addition to normal ones
-
-MODE: `deep`
-
-INPUT:
-
-```html
-<p>Before [OPTIONAL] after</p>
-```
-
-<!--
-EXPECTED:
-<p>Before after</p>
--->
-
-## Test 10: Canvas mode removes comments and target attributes
-
-MODE: `canvas`
-
-INPUT:
-
-```html
-<!-- comment -->
-<p><a href="https://example.com" target="_blank">External</a><br></p>
-```
-
-<!--
-EXPECTED:
-<p><a href="https://example.com">External</a></p>
--->
-
-## Test 11: MP mode converts bullet paragraphs into ul/li markup
-
-MODE: `mp`
-
-INPUT:
-
-```html
-<p class="bulletlist">First</p>
-<p class="standardbulletpoint">Second</p>
-```
-
-<!--
-EXPECTED:
-<ul><li>First</li><li>Second</li></ul>
--->
-
-## Test 12: MP mode unwraps p tags around standalone images
-
-MODE: `mp`
-
-INPUT:
-
-```html
-<p><img src="image.jpg" alt="Example"></p>
-```
-
-<!--
-EXPECTED:
-<img src="image.jpg" alt="Example">
--->
-
-## Test 13: Table mode removes table tags after substitution and tag cleanup
-
-MODE: `table`
-
-INPUT:
-
-```html
-<table><tbody><tr><td>Cell</td></tr></tbody></table>
-```
-
-<!--
-EXPECTED:
-Cell
--->
-
-## Test 14: Audio block is moved to the top when embedded later in the document
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<p>Intro</p><audio controls src="audio.mp3"></audio><p>After</p>
-```
-
-<!--
-EXPECTED:
-<audio controls src="audio.mp3"></audio><div class="clearfix container-fluid"></div><p>Intro</p><p>After</p>
--->
-
-## Test 15: ReadSpeaker links and icons are removed
-
-MODE: `normal`
-
-INPUT:
-
-```html
-<p><a href="https://app.readspeaker.com/cgi-bin/rsent?customerid=1">Listen</a></p>
-```
-
-<!--
-EXPECTED:
-<p></p>
--->
-
-## Test 16: TinyMCE attributes are removed in all modes
-
-MODE: each of `normal`, `deep`, `canvas`, `table`, `mp`, `mpextended`;
-use no-prettify first, then normal with HTMLPrettify.
-
-INPUT:
-
-```html
-<p data-mce-style="text-align: left;" data-purpose="layout">Text</p>
-<img src="real.jpg" data-mce-src='draft.jpg' alt="Image">
-```
-
-EXPECTED: `data-mce-style` and `data-mce-src` disappear; `data-purpose`,
-`src="real.jpg"`, `alt`, and text remain. Add an exact name and another `*`
-pattern to `remove_attributes` and confirm they match only attribute names.
-With `remove_attributes: []`, both TinyMCE attributes remain, including Canvas.
-
-## Test 17: Empty TinyMCE placeholders survive
-
-MODE: all modes, then normal with HTMLPrettify. Saved defaults protect `div`,
-`span`, and `i`.
-
-INPUT:
-
-```html
-<div></div><span class="icon"></span><i aria-hidden="true"></i>
-<strong class="icon">&nbsp;</strong><p>&nbsp;</p><p>Word&nbsp;word</p>
-```
-
-EXPECTED: the empty `div`, `span`, and `i` remain and contain NBSP; the existing
-`strong` NBSP remains. The blank paragraph is removed, and ordinary prose
-becomes `Word word`. NBSP may serialize as Unicode U+00A0. Run twice and confirm
-that a second cleanup does not add more NBSPs. Nonempty elements and void
-`img` elements must not be padded. Explicit `remove_selectors` still win.
-
-Narrow `protect_empty_selectors` to a class selector and confirm only matching
-empty elements are padded. Set it to `[]` and disable
-`preserve_nbsp_placeholders` to check the legacy cleanup behavior. Restore the
-settings after testing. Finally paste into Moodle TinyMCE, save, reopen, and
-inspect learner-facing HTML for preserved elements/classes/ARIA attributes;
-record the Moodle/editor version used for this roundtrip.
-
-### Verification — 2026-09-30
-
-PyBuild passed 24 headless regressions and all declared syntax checks. Native
-Sublime commands passed a focused TinyMCE fixture in all six modes without
-prettify: editor attributes were removed, real image `src` was retained,
-empty `div`/`span`/`i` received NBSP, an existing attributed `strong` NBSP was
-retained, and the blank paragraph was removed. A custom protection selector
-also passed against Sublime's embedded BeautifulSoup. Normal mode with
-HTMLPrettify passed on a scratch copy of `testbed.html` plus that fixture.
-This does not certify the complete manual plan or a Moodle TinyMCE save/reopen
-roundtrip; those broader checks remain separate.
+There must be no table, caption, table-section, row or cell wrappers remaining.
+Plain heading becomes `<h3>Plain heading</h3>`. The formatted header retains
+`<strong>Formatted heading</strong>`; paragraph/emphasis/caption content survives.
+Column markup is removed. Cell and row boundaries use the configured separators.
+Nested tables preserve their inner HTML too. Normal mode preserves table markup.
+Repeat both structural cleanup and the HTMLPrettify path to check stability.
+
+## Modes and optional rules
+
+- Normal is the first configured/default mode; deep also replaces `[OPTIONAL]`
+  in prose. Excluded code retains it.
+- Canvas removes configured comments/targets; ordinary numbers and URLs remain.
+- MP and MP Extended are absent from the palette. Their substitutions are
+  archived in `legacy-mp-transformations.md` and are not active rules.
+- For audio testing, temporarily enable the rule with id `audio-hoisting`.
+  Audio elements retain their order and move to the start of body/fragment
+  content, followed by the configured separator. Doctype stays before HTML.
+  Restore the rule's saved `enabled: false` afterward.
+
+## Settings and editor integration
+
+- Disable a rule, run cleanup, restore it, then confirm the next command loads
+  the change without restarting Sublime.
+- Introduce an invalid selector, regex, replacement backreference or setting
+  type in a temporary override: cleanup reports the rule/key and leaves the
+  buffer unchanged. Restore valid settings.
+- Check all retained palette entries, shared BirdyOz menu entries and existing
+  key bindings. Check both no-prettify and configured HTMLPrettify output.
+- Confirm caret and multiple/reversed selections remain usable after cleanup;
+  one Undo restores the structural edit. A second unchanged cleanup should
+  create no additional structural edit. HTMLPrettify may have its own edit.
+- Paste cleaned HTML into Moodle TinyMCE, save and reopen. Confirm empty
+  div/span/i placeholders, headings, images, links and formatted cell content
+  survive, then clean the returned HTML to remove regenerated editor attributes.
+
+## Verification record — 2026-09-30
+
+The shared PyBuild gate passes 15 test methods, including 69 shared fixtures,
+all four working-testbed repeated-run checks, adapter/configuration checks and
+all four declared syntax targets. Two suites pass with no skips or informational
+suites.
+
+Before the later paragraph/comment and grouping updates, native Sublime execution passed 66 checks: 60 shared fixtures using the actual
+command and repeated execution, invalid-settings buffer preservation, all four
+testbed modes, and table cleanup followed by HTMLPrettify. The formatting check
+confirms plain header H3, formatted header/cell HTML, NBSP and PRE indentation.
+
+Keyboard/menu entry points, undo behavior and a Moodle TinyMCE save/reopen
+roundtrip remain manual checks. No saved audio-setting change was made.
+
+Grouped settings verification confirms expansion matches the previous effective
+rule order and values. Tests cover shared defaults, selector/object/pair entries,
+optional pair options, invalid groups and duplicate IDs. Native inspection
+confirmed Sublime alphabetizes object keys, so group and entry order are explicit
+arrays. A native rerun of the latest grouping remains pending after active
+editor interaction interrupted the automation.

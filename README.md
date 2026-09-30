@@ -1,183 +1,120 @@
 # CleanHTML for Sublime Text
 
-`CleanHTML` is a Sublime Text command for tidying strict HTML files, especially HTML produced by Moodle ATTO and similar editor-driven workflows.
+CleanHTML rewrites a whole strict-HTML document, especially Moodle TinyMCE/ATTO
+content. For mixed Markdown with embedded HTML, use CleanMD.
 
-Unlike `CleanMD`, this package assumes the document is HTML rather than mixed Markdown.
+## Settings are the cleanup policy
 
-Use `CleanHTML` for full HTML documents. For mixed Markdown files with embedded HTML blocks, use `CleanMD`.
+[`CleanHTML.sublime-settings`](CleanHTML.sublime-settings) is the single source
+of truth for active rules, selectors, class/style/attribute edits, text and URL
+regex patterns, replacements, modes, and empty-element preservation. Python
+contains validation and generic transformation handlers, not a duplicate
+`DEFAULT_CLEANHTML_CONFIG` or hardcoded substitution lists.
 
-## Settings
+Rules are grouped by operation, with shared defaults and compact named entries.
+Text substitutions accept find/replace pairs. Edit/add an entry or set
+`"enabled": false` in its options to disable it. Changes are
+loaded on the next command. `rules.order` and entry lists preserve execution
+order even though Sublime alphabetizes object keys. No separate User settings
+file is needed. See
+[settings-reference.md](settings-reference.md) for action fields and examples.
+The file uses Sublime’s JSON-with-comments format. Inline comments explain
+every saved rule, and substitutions use one compact object per line. The
+headless loader ignores comments while preserving URL and regex strings.
+Invalid settings leave the document unchanged and identify the
+failing key/rule in the Sublime console/status message.
 
-`CleanHTML` includes a package settings file:
+The saved rules:
 
-- [`CleanHTML.sublime-settings`](/Users/gbird/Library/Application%20Support/Sublime%20Text/Packages/CleanHTML/CleanHTML.sublime-settings)
+- Remove `data-mce-*`, YUI IDs, known overlays and ReadSpeaker artifacts.
+- Remove exact redundant class tokens, attributes and style declarations,
+  preserving unrelated styles/classes and meaningful empty image `alt`.
+- Normalize absolute HTTP(S) links with target/rel while preserving existing
+  external rel tokens. Internal target/rel removal is explicitly configurable.
+- Repair nested paragraph wrappers and simplify selected structural wrappers.
+- Preserve meaningful BRs, named anchors, multiple paragraphs in list items,
+  and whitespace-sensitive content. Known bogus/trailing editor BRs are
+  removed without consuming adjacent text. BR-only paragraphs are deleted;
+  image-only paragraphs are unwrapped, retaining the images.
+- Add NBSP to empty `div`, `span`, and `i`, including elements emptied by
+  cleanup. Preserve meaningful empty targets/ARIA attributes and existing
+  attributed NBSP placeholders after editor attributes are removed.
+- Put structural `Start of…` / `End of…` comments on separate lines.
+- Apply remaining text regexes to scoped text nodes and timestamp regexes to
+  image URL query terms; no cleanup regex scans the whole HTML document.
 
-The current settings control:
+`pre`, `code`, `script`, `style`, and `textarea` are excluded from text cleanup,
+structural simplification and empty cleanup through configured selectors.
+Explicit removal rules still take precedence. HTML serialization can change
+quotes, entity spelling and attribute order; NBSP is emitted as `&nbsp;` with
+the saved HTML formatter.
 
-- whether external links are normalised with safe `target` / `rel` attributes
-- whether invalid nested paragraph wrappers are repaired
-- whether embedded audio is hoisted to the top of the document for legacy workflows
-- whether `htmlprettify` runs after cleanup
-- which matched elements are unwrapped with BeautifulSoup CSS selectors
-- which matched elements are removed entirely with BeautifulSoup CSS selectors
-- which attributes are removed by exact name or `*` wildcard
-- which empty elements receive a non-breaking space for TinyMCE preservation
+The cleaner validates first, parses once, runs explicit removals before
+other rules, applies remaining rules in order, finalizes empty elements,
+serializes once, and replaces the buffer once if it changed. It preserves an
+appropriate clamped caret/selection instead of selecting/joining the document.
+The console reports per-rule counts. HTMLPrettify is an optional separate final
+formatting step; the status says when it was requested.
 
-TinyMCE defaults in `CleanHTML.sublime-settings`:
+## Modes and commands
 
-```json
-"remove_attributes": ["data-mce-*"],
-"preserve_nbsp_placeholders": true,
-"protect_empty_selectors": ["div", "span", "i"]
-```
+| Mode | Saved behavior |
+|---|---|
+| `normal` | Common structural, attribute, style, link and text cleanup |
+| `deep` | Normal plus the configured `[OPTIONAL]` text replacement |
+| `canvas` | Common cleanup plus comment removal and external target removal |
+| `table` | Deep plus table unwrapping; plain-text `th` becomes `h3` |
 
-Add exact attribute names or wildcard patterns to `remove_attributes`, for
-example `["data-mce-*", "data-editor-*", "contenteditable"]`. Matching uses
-the complete attribute name, is case-insensitive, and treats only `*` as a
-wildcard. Values, real `src`/`style` attributes, and unrelated `data-*`
-attributes are preserved unless explicitly listed. Set the list to `[]` to
-disable this removal in every mode. Selector cleanup runs before attribute
-removal, so selectors can still match the original attributes.
+Table mode removes the table/section/row/cell/caption wrappers and column tags,
+retaining the HTML inside cells. A plain-text header becomes an `h3`; a header
+containing HTML retains that HTML. A space separates neighboring cells and a
+newline separates rows. The header tag and separators are settings fields.
 
-Empty `div`, `span`, and `i` elements gain a non-breaking space and survive
-structural unwrapping, including MP mode's span cleanup. Extend or narrow
-`protect_empty_selectors` with CSS selectors such as `span.component__icon`.
-Only whitespace-only elements with no child elements are padded; void tags
-such as `img` are never padded. Existing NBSP placeholders in otherwise-empty
-attributed elements are also retained when `preserve_nbsp_placeholders` is
-true. Ordinary NBSP text becomes regular spaces, and blank paragraphs still
-clean up. BeautifulSoup may emit the actual Unicode NBSP character rather
-than the spelling `&nbsp;`; these are equivalent HTML content.
+Palette entries retain the `BirdyOz - Clean HTML` names, including **normal,
+no prettify** for inspecting structural cleanup. The shared BirdyOz menu reads
+these same command entries. Existing macOS shortcuts remain:
 
-Explicit removal selectors and table-mode table unwrapping still take
-precedence. To restore the previous placeholder cleanup, use
-`"protect_empty_selectors": []` and `"preserve_nbsp_placeholders": false`.
-Confirm preservation after saving through your Moodle TinyMCE editor as well
-as in Sublime; editor configuration can affect the roundtrip.
+- Cmd+Shift+Backslash: normal.
+- Cmd+Option+Backslash: deep.
+- Ctrl+Option+Backslash: Canvas.
+- Cmd+Shift+Option+Backslash: table.
 
-Selector examples you can add over time include:
+MP and MP Extended have been retired. Their exact historical substitutions
+and reuse cautions are in [legacy-mp-transformations.md](legacy-mp-transformations.md).
+The historic global Canvas number migration is also archived there; it is no
+longer active. Audio hoisting remains as a disabled settings rule.
 
-- `div.delete-me`
-- `a[name]`
-- `li > p`
-- `div.legacy-wrapper > span`
+## Indentation
 
-## What CleanHTML does
+Set HTMLPrettify’s HTML `indent_size` to `2` for two-space formatted output.
+Sublime’s application `tab_size` and `translate_tabs_to_spaces` control editing
+defaults across syntaxes; they do not override the formatter while
+`use_editor_indentation` is false. See the indentation section in
+[settings-reference.md](settings-reference.md). CleanHTML has no indentation
+width setting.
 
-`CleanHTML` runs across the whole file and applies a sequence of substitutions, tag removals, and final HTML prettification.
+## Dependencies and verification
 
-Core cleanup includes:
+BeautifulSoup and SoupSieve must be available in Sublime's embedded runtime.
+[HTML-CSS-JS Prettify](https://packagecontrol.io/packages/HTML-CSS-JS%20Prettify)
+is needed when final formatting is enabled. Keep the `.python-version` selector
+at `3.8`; shell Python is not evidence of Sublime runtime compatibility.
 
-- normalising ordinary `&nbsp;` text and removing common editor artefacts such as `data-mce-*`, YUI ids, redundant `dir="ltr"`, and some default inline styles
-- removing or simplifying unnecessary wrapper tags such as `span`, `section`, `article`, empty `div`, and several empty inline/block tags
-- stripping bullet-like prefixes from `<li>` content
-- removing Moodle image timestamp suffixes
-- cleaning up specific attribution helper markup
-- normalising external links so `http` and `https` links get `target="_blank"` and `rel="noopener noreferrer"`
-- repairing invalid nested paragraph wrappers such as `<p><p>...</p></p>`
-- applying a first-pass BeautifulSoup structural cleanup for selected wrapper and malformed tags
-- unwrapping or removing extra elements via settings-driven CSS selectors
-- moving embedded `<audio>` blocks to the top of the document when required by the existing workflow
-
-After substitutions, the package performs structural tag cleanup and then runs HTML prettification.
-
-Each run also reports a short summary in the status bar and Sublime console, including the cleaning mode, number of substitutions, and number of tags removed.
-
-## Cleaning Modes
-
-The package provides multiple cleaning modes:
-
-- `normal`
-  Standard HTML cleanup for editor-generated markup.
-
-- `deep`
-  Normal cleanup plus additional deep substitutions.
-
-- `canvas`
-  Canvas-specific cleanup rules, including comment and editor-attribute removal.
-
-- `table`
-  Deep cleanup plus aggressive table-tag removal.
-
-- `mp`
-  Melbourne Polytechnic-specific cleanup, including conversion of some paragraph-based bullets into list markup and a number of content transformations.
-
-- `mpextended`
-  Extension point for additional Melbourne Polytechnic-specific substitutions.
-
-## Commands
-
-Command palette entries currently provided:
-
-- `BirdyOz - Clean HTML (normal)`
-- `BirdyOz - Clean HTML (normal, no prettify)`
-- `BirdyOz - Clean HTML (Deep)`
-- `BirdyOz - Clean HTML (Canvas)`
-- `BirdyOz - Clean HTML (Table plus Deep)`
-- `BirdyOz - Clean HTML (Melb Poly)`
-- `BirdyOz - Clean HTML (Melb Poly - Extended)`
-
-## Dependencies
-
-This package relies on other Sublime Text packages for parts of the workflow:
-
-- [HTML-CSS-JS Prettify](https://packagecontrol.io/packages/HTML-CSS-JS%20Prettify) for final HTML prettification
-
-It also uses BeautifulSoup internally for targeted HTML repairs, safer link handling, and structural cleanup.
-
-## Usage
-
-1. Open a strict HTML file.
-2. Run the appropriate `Clean HTML` command from the Command Palette.
-3. Choose the cleaning mode that matches the content source.
-
-Because the command runs across the full document, it is best used on working copies or source files that are intended to be rewritten in-place.
-
-If you want to inspect the structural cleanup before final formatting, use:
-
-- `BirdyOz - Clean HTML (normal, no prettify)`
-
-## Test Assets
-
-The package includes:
-
-- [`testbed.html`](/Users/gbird/Library/Application%20Support/Sublime%20Text/Packages/CleanHTML/testbed.html)
-- [`testplan.md`](/Users/gbird/Library/Application%20Support/Sublime%20Text/Packages/CleanHTML/testplan.md)
-
-These remain the manual, in-Sublime regression aids for full command modes and
-HTMLPrettify integration.
-
-The project-owned headless-safe suite is visible under `tests/`:
-
-- `tests/clean_html_cases.py` contains the executable link and structural cases.
-- `tests/test_clean_html.py` supplies narrow Sublime API stubs and runs 24
-  regressions, including the TinyMCE command pipeline in all six modes.
-
-Run it from the project root with:
+Executable fixtures are under `tests/`; they load the repository settings,
+cover cleanup and preservation, and check repeated-run stability. The adapter
+tests also check one parse, at most one buffer replacement, selections, invalid
+settings, retired modes, and prettify dispatch. The headless stub loader
+restores global modules and must not be used as a live Sublime test runner.
 
 ```zsh
 /Users/gbird/.venvs/workbench/bin/python -m unittest -v tests/test_clean_html.py
-```
 
-Or open `tests/test_clean_html.py` in Sublime and choose **Build With →
-PyBuild**. Run the complete project gate, including syntax compilation, with:
-
-```zsh
 /Users/gbird/.venvs/workbench/bin/python \
   /Users/gbird/Dropbox/github/pybuild/scripts/run_plugin_smokes.py \
   --project CleanHTML
 ```
 
-As of 2026-09-24, that gate passes all 15 headless regressions and the
-declared syntax checks. It does not replace the required in-Sublime check for
-package loading, command/menu/keybinding behaviour, HTMLPrettify integration,
-or complete mode coverage; use a working copy of `testbed.html` and
-`testplan.md` for those checks.
-
-## Keyboard Shortcuts
-
-Default macOS shortcuts:
-
-- <kbd>CMD</kbd> + <kbd>Shift</kbd> + <kbd>\\</kbd> for normal mode
-- <kbd>CMD</kbd> + <kbd>Opt</kbd> + <kbd>\\</kbd> for deep mode
-- <kbd>CMD</kbd> + <kbd>Shift</kbd> + <kbd>Opt</kbd> + <kbd>\\</kbd> for table mode
+[pybuild-smokes.toml](pybuild-smokes.toml) owns the shared gate.
+[testplan.md](testplan.md) covers native commands, formatting and Moodle
+roundtrip checks. [testbed.html](testbed.html) is a mutable working fixture:
+use a scratch copy, and use the executable cases for pristine inputs.

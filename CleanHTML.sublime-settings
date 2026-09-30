@@ -1,27 +1,289 @@
 {
-    "normalize_external_links": true,
-    "repair_nested_paragraph_wrappers": true,
-    "hoist_audio_to_top": false,
+    // Settings schema, not a cleanup rule. Keep at 1.
+    "schema_version": 1,
+    // Supported command modes. The first is the default; a rule without modes runs in all.
+    "modes": ["normal", "deep", "canvas", "table"],
+    // Final formatting; the "normal, no prettify" command overrides this for one run.
     "run_htmlprettify_after_clean": true,
-    "remove_attributes": [
-        "data-mce-*"
-    ],
-    "preserve_nbsp_placeholders": true,
-    "protect_empty_selectors": [
-        "div",
-        "span",
-        "i"
-    ],
-    "unwrap_selectors": [
-        "section",
-        "article",
-        "a[name]",
-        "li > p",
-        "div:not([class]):not([id]):not([style])"
-    ],
-    "remove_selectors": [
-        "a[href*=\"readspeaker.com\"]",
-        "img[src*=\"readspeaker.com\"]",
-        "div.deleteme"
-    ]
+    // "html" emits NBSP as &nbsp;; "minimal" uses less entity escaping.
+    "output_formatter": "html",
+    // Leave text, whitespace and structural wrappers inside these elements alone.
+    "text_exclude_selectors": ["pre", "code", "script", "style", "textarea"],
+
+    // Empty tags: protect = retain and pad; remove = delete if empty and unprotected.
+    "empty_elements": {
+        "protect_selectors": ["div", "span", "i"],
+        "remove_selectors": ["p", "strong", "em", "li", "b", "ol", "ul", "h1", "h2", "h3", "h4", "h5", "h6"],
+        // Keep existing NBSP placeholders in tags that still have meaningful attributes.
+        "preserve_nbsp_in_attributed_tags": true,
+        // Keep empty targets/accessibility elements with these attributes. * is a wildcard.
+        "preserve_attributes": ["id", "name", "aria-*", "role"],
+        // Unicode NBSP (same character as &nbsp;), written visibly as an escape.
+        "padding": "\u00a0"
+    },
+
+    // HOW TO EDIT / EXTEND THE GROUPS
+    // action = what this group does. defaults = shared fields inherited by every entry.
+    // entries = an ORDERED list. Sublime sorts object keys, so keep the surrounding [ ].
+    // Each entry is {"unique-rule-id": value}; invent a descriptive, globally unique ID.
+    // Add a comma between entries. IDs name rules in logs/errors; they do not change behavior.
+    // A value can be a selector string, an object of fields, or a text substitution pair.
+    // Object fields override defaults. Keep selector/flags/etc when they differ from the group.
+    // Disable: {"my-rule": {"selector": "aside", "enabled": false}}.
+    // Limit modes: add "modes": ["deep", "table"] to an entry object or group defaults.
+    // Removing an entry disables it permanently. Do not remove its group from order unless
+    // you also remove the group itself. Each group name must appear in order exactly once.
+    // Add entries to existing groups; ordinarily you do not need to change order.
+    // A new group needs action, entries and a name in order. Names are descriptive labels.
+    // Remove deletes tags AND contents; unwrap deletes tags but KEEPS contents.
+    // Text skips pre/code/script/style/textarea. CSS selectors target HTML elements.
+    // Regex uses Python syntax, with doubled backslashes: a digit is "\\d".
+    // IMPORTANT: preserve order. URL edits precede links; final whitespace follows tables;
+    // comment line breaks come last. All remove actions still execute before other actions.
+    "rules": {
+        "order": [
+            "remove", "comments", "attributes", "classes", "styles", "empty_attributes",
+            "query", "regex_attribute", "links", "canvas_targets", "move_to_start",
+            "unwrap_nested", "unwrap", "remove_trailing", "attribution_class", "substitutions",
+            "flatten_table", "whitespace", "comment_lines"
+        ],
+        "groups": {
+
+            // DELETE ELEMENTS AND CONTENTS. Add {"my-removal": "aside.unwanted"}.
+            // Use an object with children_selector to require matching children and no meaningful text.
+            "remove": {
+                "action": "remove",
+                "entries": [
+                    // Delete Harper overlays and explicitly disposable divs, including their contents.
+                    {"editor-overlays": "harper-render-box, div.deleteme"},
+                    // Delete ReadSpeaker links and images.
+                    {"readspeaker": "a[href*=\"readspeaker.com\"], img[src*=\"readspeaker.com\"]"},
+                    // Delete this ghost message only when its text matches exactly.
+                    {"ghost-message": {"selector": "div.ghost-text-message", "text_equals": "Connected! You can switch to your editor"}},
+                    // Delete TinyMCE placeholder line breaks; retain ordinary BRs.
+                    {"bogus-breaks": "br[data-mce-bogus=\"1\"]"},
+                    // Delete paragraphs containing only BR elements, including styled editor placeholders.
+                    {"paragraph-only-break": {"selector": "p", "children_selector": "br"}}
+                ]
+            },
+
+            // DELETE HTML COMMENTS. Add a pattern to filter comment text; {} matches all.
+            // Example: {"old-notes": {"pattern": "^Old note"}}. Respect configured text exclusions.
+            "comments": {
+                "action": "comments",
+                "entries": [
+                    // Delete Word conditional comments beginning [if or [end (case insensitive).
+                    {"word-comments": {"pattern": "^\\s*\\[(?:if|end)", "flags": ["IGNORECASE"]}},
+                    // Canvas only: delete every HTML comment.
+                    {"canvas-comments": {"modes": ["canvas"]}}
+                ]
+            },
+
+            // ATTRIBUTE EDITS. Shared selector * means every element unless overridden.
+            // Extend remove with names or wildcards, e.g. ["data-mce-*", "data-editor-*"].
+            // remove_empty deletes blank values; remove_matching maps names to whole-value regexes.
+            // Example: {"my-attribute": {"remove": ["data-editor-*"]}}. set adds/replaces attribute values.
+            "attributes": {
+                "action": "attributes",
+                "defaults": {"selector": "*"},
+                "entries": [
+                    // Remove attribute names matching these wildcards. Add names/patterns to remove here.
+                    {"editor-attributes": {"remove": ["data-mce-*"]}},
+                    // Remove generated IDs beginning yui.
+                    {"yui-ids": {"selector": "[id^=\"yui\"]", "remove": ["id"]}},
+                    // Remove redundant left-to-right direction.
+                    {"default-direction": {"selector": "[dir=\"ltr\"]", "remove": ["dir"]}},
+                    // Remove redundant top alignment from table cells.
+                    {"default-valign": {"selector": "td[valign=\"top\"], th[valign=\"top\"]", "remove": ["valign"]}},
+                    // Remove cell width only when the whole value is digits, optionally followed by %.
+                    {"cell-width": {"selector": "td[width]", "remove_matching": {"width": "^\\d+%?$"}}}
+                ]
+            },
+
+            // CLASS TOKENS. remove deletes exact tokens; replace maps old tokens to new ones; add appends.
+            // Example: {"rename-class": {"replace": {"old-class": "new-class"}}}.
+            // Override selector for a narrower target, e.g. "img". Other class tokens are retained.
+            "classes": {
+                "action": "classes",
+                "defaults": {"selector": "*"},
+                "entries": [
+                    // Remove these exact class tokens; retain other classes.
+                    {"editor-classes": {"remove": ["Bodycopyindented", "rspkr_dr_added"]}},
+                    // Replace this ATTO image class with the responsive image class.
+                    {"atto-image-class": {"selector": "img", "replace": {"atto_image_button_text-bottom": "w-100"}}}
+                ]
+            },
+
+            // CSS DECLARATIONS. remove maps each property to a list of exact removable values.
+            // To remove another default, extend this map: "margin": ["0px"]. Other styles survive.
+            // Example entry: {"default-margin": {"selector": "[style]", "remove": {"margin": ["0px"]}}}.
+            "styles": {
+                "action": "styles",
+                "entries": [
+                    // Remove only these property/value pairs; keep all unrelated style declarations.
+                    {"default-styles": {"selector": "[style]", "remove": {"font-size": ["1rem"], "text-align": ["left"]}}}
+                ]
+            },
+
+            // FINAL EMPTY ATTRIBUTE PASS. Runs after class/style edits can leave blank attributes.
+            "empty_attributes": {
+                "action": "attributes",
+                "entries": [
+                    // Remove empty class, id and style attributes; retain meaningful empty alt.
+                    {"empty-attributes": {"selector": "*", "remove_empty": ["class", "id", "style"]}}
+                ]
+            },
+
+            // URL QUERY TERMS. Each remove_patterns regex must match a complete query term.
+            // Choose selector and attribute explicitly; unrelated query terms and fragments survive.
+            "query": {
+                "action": "query",
+                "entries": [
+                    // Image src only: remove a complete time query term containing at least eight digits.
+                    {"image-timestamps": {"selector": "img[src]", "attribute": "src", "remove_patterns": ["^time=?\\d{8,}$"]}}
+                ]
+            },
+
+            // URL/ATTRIBUTE SUBSTITUTIONS. pattern and replacement apply only to the chosen attribute.
+            // Example: {"old-path": {"selector": "a[href]", "attribute": "href", "pattern": "^/old/", "replacement": "/new/"}}.
+            "regex_attribute": {
+                "action": "regex_attribute",
+                "entries": [
+                    // Link href only: replace the local preview URL prefix with #; retain the fragment.
+                    {"localhost-fragments": {"selector": "a[href]", "attribute": "href", "pattern": "^http://127\\.0\\.0\\.1[^#]*#", "replacement": "#"}}
+                ]
+            },
+
+            // LINK POLICY. Edit schemes, target and rel here; existing external rel tokens survive.
+            // internal_remove lists attributes deleted from links whose scheme is not listed.
+            "links": {
+                "action": "links",
+                "entries": [
+                    // HTTP(S): open externally and merge rel tokens. Other URLs: remove the listed attributes.
+                    {"external-links": {"selector": "a[href]", "schemes": ["http", "https"], "target": "_blank", "rel": ["noopener", "noreferrer"], "internal_remove": ["target", "rel"]}}
+                ]
+            },
+
+            // LATER ATTRIBUTE PASS. Must follow links, which may have just added target.
+            "canvas_targets": {
+                "action": "attributes",
+                "entries": [
+                    // Canvas only: remove external-link targets added above.
+                    {"canvas-targets": {"modes": ["canvas"], "selector": "a[target=\"_blank\"]", "remove": ["target"]}}
+                ]
+            },
+
+            // OPTIONAL MOVING. enabled:false keeps this inactive. destination is a CSS selector.
+            // separator defines the tag and attributes inserted after the moved elements.
+            "move_to_start": {
+                "action": "move_to_start",
+                "entries": [
+                    // Disabled: move audio to the start of body (or fragment), then add the separator div.
+                    {"audio-hoisting": {"enabled": false, "selector": "audio", "destination": "body", "separator": {"tag": "div", "attributes": {"class": ["clearfix", "container-fluid"]}}}}
+                ]
+            },
+
+            // NESTED WRAPPERS. children_selector requires matching child elements and no meaningful text.
+            "unwrap_nested": {
+                "action": "unwrap_nested",
+                "entries": [
+                    // Remove an outer paragraph wrapper whose element children are all paragraphs.
+                    {"nested-paragraphs": {"selector": "p", "children_selector": "p"}}
+                ]
+            },
+
+            // REMOVE WRAPPERS, KEEP CONTENTS. Add {"my-wrapper": "aside.wrapper"}.
+            // Use an object for guards: bare:true requires no attributes; only_child:true requires
+            // the sole element in its parent; children_selector requires matching children and no text.
+            // Example: {"bare-wrapper": {"selector": "aside", "bare": true}}.
+            "unwrap": {
+                "action": "unwrap",
+                "entries": [
+                    // Unwrap section/article: remove their tags but retain their contents.
+                    {"structural-wrappers": "section, article"},
+                    // Unwrap divs only when they have no attributes; empty protected divs survive.
+                    {"bare-divs": {"selector": "div", "bare": true}},
+                    // Unwrap a bare paragraph only when it is the list item’s sole content element.
+                    {"single-list-paragraph": {"selector": "li > p", "only_child": true, "bare": true}},
+                    // Unwrap attribute-free bold/emphasis tags inside headings; retain their contents.
+                    {"heading-emphasis": {"selector": ":is(h1,h2,h3,h4,h5,h6) :is(strong,b,em)", "bare": true}},
+                    // Unwrap image-only paragraphs; retain image attributes and leave mixed text/image paragraphs alone.
+                    {"paragraph-only-image": {"selector": "p", "children_selector": "img"}}
+                ]
+            },
+
+            // TRAILING CHILD CLEANUP. Delete matching children at the end; preserve preceding content.
+            "remove_trailing": {
+                "action": "remove_trailing",
+                "entries": [
+                    // Remove trailing BR elements from paragraphs without deleting adjacent text.
+                    {"trailing-paragraph-break": {"selector": "p", "children_selector": "br"}}
+                ]
+            },
+
+            // LATER CLASS PASS. Adds the attribution class after structural simplification.
+            "attribution_class": {
+                "action": "classes",
+                "entries": [
+                    // Add text-muted to the matching attribution button, retaining its other classes.
+                    {"attribution-class": {"selector": "a.source-btn[data-toggle=\"collapse\"][href^=\"#show\"]", "add": ["text-muted"]}}
+                ]
+            },
+
+            // TEXT SUBSTITUTIONS. Shared selector * targets prose throughout the document.
+            // Simple literal entry: {"my-label": ["Old label", "New label"]}.
+            // Optional third item overrides defaults: ["Old", "New", {"selector": "p", "modes": ["deep"]}].
+            // Regex entry: {"my-regex": {"pattern": "Old.*label", "replacement": "New label"}}.
+            // Empty replacement deletes matches; scope:leading limits matching to leading text nodes.
+            "substitutions": {
+                "action": "text",
+                "defaults": {"selector": "*"},
+                "entries": [
+                    // Literal substitution: change the attribution triangle.
+                    {"attribution-label": ["▼ Show attribution", "▽ Show attribution", {"selector": "a.source-btn"}]},
+                    // Regex substitution: remove a marker at the start of a list item; keep negative numbers.
+                    {"list-marker": {"selector": "li", "scope": "leading", "pattern": "^\\s*(?:[\\#*•·-]+\\s+|\\d+\\.\\s+)", "replacement": ""}},
+                    // Deep/table only: replace the literal optional marker with a space.
+                    {"optional-marker": [" [OPTIONAL] ", " ", {"modes": ["deep", "table"]}]},
+                    // Literal substitution: ordinary NBSP becomes space; protected placeholders survive.
+                    {"ordinary-nbsp": ["\u00a0", " ", {"skip_placeholders": true}]}
+                ]
+            },
+
+            // TABLE MODE. Edit heading tag and cell/row separators here.
+            // unwrap_selectors discard wrapper tags; remove_selectors discard tags AND contents.
+            "flatten_table": {
+                "action": "flatten_table",
+                "entries": [
+                    // Table only: discard table wrappers, retain cell HTML, convert plain-text TH to H3.
+                    {"table-flattening": {"modes": ["table"], "selector": "table", "row_selector": "tr", "cell_selector": "td, th", "caption_selector": "caption", "cell_separator": " ", "unwrap_selectors": ["table", "tbody", "thead", "tfoot", "tr", "td", "th", "caption"], "remove_selectors": ["colgroup", "col"], "row_separator": "\n", "plain_header_selector": "th", "plain_header_tag": "h3"}}
+                ]
+            },
+
+            // FINAL REGEX SUBSTITUTIONS. match:regex makes pairs [pattern, replacement].
+            // Add {"my-whitespace": ["pattern", "replacement"]}; optional third item supplies options.
+            // These run after table unwrapping. Keep ordinary prose spacing and excluded code intact.
+            "whitespace": {
+                "action": "text",
+                "defaults": {"selector": "*"},
+                "match": "regex", // Pair first value is a regex, not literal text.
+                "entries": [
+                    // Regex substitution: whitespace-only text containing a newline becomes one newline.
+                    {"whitespace-newlines": ["^[ \\t\\r\\n]*\\n[ \\t\\r\\n]*$", "\n"]},
+                    // Regex substitution: other whitespace-only text becomes one space.
+                    {"whitespace-spaces": ["^[ \\t\\r]+$", " "]}
+                ]
+            },
+
+            // COMMENT FORMATTING. pattern selects comment text to place on separate lines.
+            // Omit pattern to select every comment outside excluded elements. Keep this group last.
+            "comment_lines": {
+                "action": "comment_lines",
+                "entries": [
+                    // Runs last so earlier whitespace substitutions cannot undo the line breaks.
+                    {"structural-comment-lines": {"pattern": "^\\s*(?:Start|End) of\\b", "flags": ["IGNORECASE"]}}
+                ]
+            }
+        }
+    }
 }
